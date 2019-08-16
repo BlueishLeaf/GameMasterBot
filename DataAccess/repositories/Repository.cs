@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces.Repositories;
+using Common.Interfaces.DataAccess.Repositories;
 
-namespace DataAccess.repositories
+namespace DataAccess.Repositories
 {
     public class Repository<TEntity>: IRepository<TEntity> where TEntity: class
     {

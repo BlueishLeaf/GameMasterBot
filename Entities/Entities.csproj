@@ -8,4 +8,8 @@
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.101.54" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
 </Project>

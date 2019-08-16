@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Common.Interfaces.DataAccess;
+using DataAccess;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -31,6 +33,7 @@ namespace GameMasterBot
         private static ServiceProvider BuildServiceProvider() => new ServiceCollection()
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<CommandService>()
+            .AddSingleton<IUnitOfWork, UnitOfWork>()
             .BuildServiceProvider();
 
         private static Task LogAsync(LogMessage msg)

@@ -1,6 +1,6 @@
-﻿using Common.Interfaces.Repositories;
+﻿using Common.Interfaces.DataAccess.Repositories;
 
-namespace Common.Interfaces
+namespace Common.Interfaces.DataAccess
 {
     public interface IUnitOfWork
     {

@@ -1,7 +1,6 @@
-﻿using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces;
-using Common.Interfaces.Repositories;
-using DataAccess.repositories;
+﻿using Common.Interfaces.DataAccess;
+using Common.Interfaces.DataAccess.Repositories;
+using DataAccess.Repositories;
 
 namespace DataAccess
 {
@@ -11,7 +10,7 @@ namespace DataAccess
         public IPlayerRepository Players { get; }
         public ISessionRepository Sessions { get; }
 
-        public UnitOfWork(DynamoDBContext context)
+        public UnitOfWork(GameMasterContext context)
         {
             Campaigns = new CampaignRepository(context);
             Players = new PlayerRepository(context);

@@ -1,23 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces.Repositories;
-using Entities.core;
+﻿using System.Collections.Generic;
+using Amazon.DynamoDBv2.DocumentModel;
+using Common.Interfaces.DataAccess.Repositories;
+using Common.Interfaces.Entities.Core;
+using Entities.Core;
 
-namespace DataAccess.repositories
+namespace DataAccess.Repositories
 {
-    public class CampaignRepository: Repository<Campaign>, ICampaignRepository
+    public class CampaignRepository: Repository<ICampaign>, ICampaignRepository
     {
-        public CampaignRepository(DynamoDBContext context) : base(context) { }
+        public GameMasterContext GameMasterContext => Context as GameMasterContext;
 
-        public IEnumerable<Campaign> GetCampaignsForServer(string serverId)
-        {
-            throw new NotImplementedException();
-        }
+        public CampaignRepository(GameMasterContext context) : base(context) { }
 
-        public IEnumerable<Campaign> GetCampaignsForPlayer(string playerId)
-        {
-            throw new NotImplementedException();
-        }
+        public IEnumerable<ICampaign> GetCampaignsForServer(string serverId) => Context.QueryAsync<Campaign>(
+                $"Server#{serverId}",
+                QueryOperator.BeginsWith,
+                new[] { "Campaign#" })
+            .GetNextSetAsync().Result;
+
+        public IEnumerable<IPlayerCampaign> GetCampaignsForPlayer(string playerId) => Context
+            .QueryAsync<PlayerCampaign>(
+                $"Player#{playerId}",
+                QueryOperator.BeginsWith,
+                new[] { "Campaign#" })
+            .GetNextSetAsync().Result;
     }
 }

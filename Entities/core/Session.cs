@@ -1,9 +1,11 @@
 ﻿using System;
+using Common.Interfaces.Entities.Core;
 
-namespace Entities.core
+namespace Entities.Core
 {
-    public class Session: DynamoDbItem
+    public class Session: DynamoDbItem, ISession
     {
+        public string Id { get; set; }
         public DateTime StartTime { get; set; }
     }
 }

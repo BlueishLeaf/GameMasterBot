@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Common.Interfaces.Repositories
+namespace Common.Interfaces.DataAccess.Repositories
 {
     public interface IRepository<TEntity> where TEntity: class
     {

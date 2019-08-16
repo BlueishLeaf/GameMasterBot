@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces.Repositories;
-using Entities.core;
+using Common.Interfaces.DataAccess.Repositories;
+using Common.Interfaces.Entities.Core;
 
-namespace DataAccess.repositories
+namespace DataAccess.Repositories
 {
-    public class PlayerRepository: Repository<Player>, IPlayerRepository
+    public class PlayerRepository: Repository<IPlayer>, IPlayerRepository
     {
-        public PlayerRepository(DynamoDBContext context) : base(context) { }
+        public GameMasterContext GameMasterContext => Context as GameMasterContext;
 
-        public IEnumerable<Player> GetPlayersForServer(string serverId)
+        public PlayerRepository(GameMasterContext context) : base(context) { }
+
+        public IEnumerable<IPlayer> GetPlayersForServer(string serverId)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<Player> GetPlayersForCampaign(string campaignId)
+        public IEnumerable<IPlayer> GetPlayersForCampaign(string campaignId)
         {
             throw new NotImplementedException();
         }

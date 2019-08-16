@@ -1,26 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces.Repositories;
-using Entities.core;
+using Common.Interfaces.DataAccess.Repositories;
+using Common.Interfaces.Entities.Core;
 
-namespace DataAccess.repositories
+namespace DataAccess.Repositories
 {
-    public class SessionRepository: Repository<Session>, ISessionRepository
+    public class SessionRepository: Repository<ISession>, ISessionRepository
     {
-        public SessionRepository(DynamoDBContext context) : base(context) { }
+        public GameMasterContext GameMasterContext => Context as GameMasterContext;
 
-        public IEnumerable<Session> GetSessionsForCampaign(string campaignId)
+        public SessionRepository(GameMasterContext context) : base(context) { }
+
+        public IEnumerable<ISession> GetSessionsForCampaign(string campaignId)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<Session> GetSessionsForServer(string serverId)
+        public IEnumerable<ISession> GetSessionsForServer(string serverId)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<Session> GetSessionsForPlayer(string playerId)
+        public IEnumerable<ISession> GetSessionsForPlayer(string playerId)
         {
             throw new NotImplementedException();
         }
