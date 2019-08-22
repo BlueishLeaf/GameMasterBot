@@ -7,8 +7,12 @@ namespace Entities
     [DynamoDBTable("GameMasterBotTbl")]
     public class DynamoDbItem: IDynamoDbItem
     {
-        [DynamoDBHashKey] public string Pk { get; set; }
-        [DynamoDBRangeKey] public string Sk { get; set; }
+        [DynamoDBHashKey]
+        public string Pk { get; set; }
+        [DynamoDBRangeKey, DynamoDBGlobalSecondaryIndexRangeKey("Entity-Sk-Index")]
+        public string Sk { get; set; }
+        [DynamoDBGlobalSecondaryIndexHashKey("Entity-Sk-Index")]
+        public string Entity { get; set; }
         public DateTime Ts { get; set; }
     }
 }

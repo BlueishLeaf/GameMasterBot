@@ -5,6 +5,7 @@ using DataAccess;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using GameMasterBot.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GameMasterBot
@@ -20,11 +21,11 @@ namespace GameMasterBot
                 var client = services.GetRequiredService<DiscordSocketClient>();
                 client.Log += LogAsync;
 
-                await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("token"));
+                await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
                 await client.StartAsync();
 
                 await services.GetRequiredService<CommandHandler>().InitializeAsync();
-                // services.GetRequiredService<SessionService>().Initialize();
+                services.GetRequiredService<SessionService>().Initialize();
 
                 await Task.Delay(-1);
             }
@@ -33,7 +34,11 @@ namespace GameMasterBot
         private static ServiceProvider BuildServiceProvider() => new ServiceCollection()
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<CommandService>()
+            .AddSingleton<CommandHandler>()
+            .AddSingleton<GameMasterContext>()
             .AddSingleton<IUnitOfWork, UnitOfWork>()
+            .AddSingleton<CampaignService>()
+            .AddScoped<SessionService>()
             .BuildServiceProvider();
 
         private static Task LogAsync(LogMessage msg)

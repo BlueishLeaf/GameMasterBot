@@ -6,6 +6,7 @@ namespace Common.Interfaces.Entities
     {
         string Pk { get; set; }
         string Sk { get; set; }
+        string Entity { get; set; }
         DateTime Ts { get; set; }
     }
 }

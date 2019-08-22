@@ -1,4 +1,6 @@
-﻿using Common.Interfaces.Entities.Core;
+﻿using System.Collections.Generic;
+using Amazon.DynamoDBv2.DataModel;
+using Common.Interfaces.Entities.Core;
 
 namespace Entities.Core
 {
@@ -10,5 +12,9 @@ namespace Entities.Core
         public string CreatedBy { get; set; }
         public string System { get; set; }
         public string Url { get; set; }
+        public string ServerName { get; set; }
+        public string ServerId { get; set; }
+        public List<string> Players { get; set; }
+        [DynamoDBIgnore] public ISession[] Sessions { get; set; }
     }
 }
