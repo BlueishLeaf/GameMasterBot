@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces.DataAccess.Repositories;
+﻿using Amazon.DynamoDBv2.DataModel;
 
 namespace DataAccess.Repositories
 {

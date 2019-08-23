@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utils;
+
 // ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
@@ -81,8 +82,36 @@ namespace GameMasterBot.Modules
 
             #region Guild Administration
 
+            // TODO Move elsewhere, and allow users to pick color
+            Color roleColor;
+            var random = new Random();
+            switch (random.Next(5))
+            {
+                case 0:
+                    roleColor = Color.Blue;
+                    break;
+                case 1:
+                    roleColor = Color.Green;
+                    break;
+                case 2:
+                    roleColor = Color.Purple;
+                    break;
+                case 3:
+                    roleColor = Color.Orange;
+                    break;
+                case 4:
+                    roleColor = Color.Red;
+                    break;
+                case 5:
+                    roleColor = Color.Teal;
+                    break;
+                default:
+                    roleColor = Color.Default;
+                    break;
+            }
+
             var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Player") ??
-                (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Player").Result;
+                (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Player", null, roleColor).Result;
 
             // Create the category channel for this campaign's system if one does not already exist
             var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == campaign.System) ??
