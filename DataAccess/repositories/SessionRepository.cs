@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
@@ -15,26 +16,23 @@ namespace DataAccess.Repositories
 
         public SessionRepository(GameMasterContext context) : base(context) { }
 
-        public IEnumerable<ISession> GetAllUpcoming() => 
+        public IEnumerable<ISession> GetAllAfterDate(DateTime date) => 
             Context.QueryAsync<Session>(
-                $"Session",
+                "Session",
                 QueryOperator.GreaterThanOrEqual,
-                new[] { $"Session#{DateTime.UtcNow}" },
+                new[] { $"Session#{date:O}" },
                 new DynamoDBOperationConfig
                 {
                     IndexName = "Entity-Sk-Index"
                 })
                 .GetNextSetAsync().Result;
 
-        public IEnumerable<ISession> GetForCampaign(string campaignId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<ISession> GetForServer(string serverId)
-        {
-            throw new NotImplementedException();
-        }
+        public IEnumerable<ISession> GetForCampaign(string campaignId) =>
+            Context.QueryAsync<Session>(
+                $"Campaign#{campaignId}",
+                QueryOperator.BeginsWith,
+                new[] {"Session#"})
+                .GetNextSetAsync().Result;
 
         public IEnumerable<ISession> GetForPlayer(string playerId)
         {
@@ -44,15 +42,14 @@ namespace DataAccess.Repositories
         public async Task Add(ISession session)
         {
             session.Pk = $"Campaign#{session.CampaignId}";
-            session.Sk = $"Session#{session.Date}";
+            session.Sk = $"Session#{session.Date:O}";
             session.Entity = "Session";
-            session.Ts = DateTime.Now;
+            session.Ts = DateTime.UtcNow;
             await Context.SaveAsync(session as Session);
         }
 
-        public async Task Remove(string campaignId, string sessionId)
-        {
-            throw new NotImplementedException();
-        }
+        public async Task Update(ISession session) => await Context.SaveAsync(session as Session);
+
+        public async Task Remove(ISession session) => await Context.DeleteAsync(session as Session);
     }
 }

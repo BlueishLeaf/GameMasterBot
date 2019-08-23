@@ -9,5 +9,7 @@ namespace Entities.Core
         public string CampaignId { get; set; }
         public string Schedule { get; set; }
         public DateTime Date { get; set; }
+        public bool ReminderSent { get; set; }
+        public bool TriggerSent { get; set; }
     }
 }

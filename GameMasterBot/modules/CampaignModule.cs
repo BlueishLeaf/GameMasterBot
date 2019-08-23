@@ -160,18 +160,31 @@ namespace GameMasterBot.Modules
 
             #endregion
 
-            _service.Remove(Context.Guild.Id.ToString(), campaignId);
-
-            await ReplyAsync($"Campaign removed successfully!");
-            return GameMasterResult.SuccessResult($"Campaign({name}) removed successfully.");
+            try
+            {
+                _service.Remove(Context.Guild.Id.ToString(), campaignId);
+                await ReplyAsync($"Campaign removed successfully!");
+                return GameMasterResult.SuccessResult($"Campaign({name}) removed successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+            }
         }
 
         [Command("info"), Summary("Returns information about the campaign belonging to this channel.")]
         public async Task<RuntimeResult> GetAsync()
         {
-            var campaign = await _service.Get(Context.Guild.Id.ToString(), Context.Channel.Name);
-            await ReplyAsync("Campaign found successfully!", false, EmbedUtils.CampaignEmbed(campaign));
-            return GameMasterResult.SuccessResult($"Campaign({campaign.Name}) found successfully.");
+            try
+            {
+                var campaign = await _service.Get(Context.Guild.Id.ToString(), Context.Channel.Name);
+                await ReplyAsync("Campaign found successfully!", false, EmbedUtils.CampaignEmbed(campaign));
+                return GameMasterResult.SuccessResult($"Campaign({campaign.Name}) found successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+            }
         }
 
         [Command("info"), Summary("Returns information about the campaign specified.")]
@@ -190,17 +203,31 @@ namespace GameMasterBot.Modules
 
             #endregion
 
-            var campaign = await _service.Get(Context.Guild.Id.ToString(), name.ToLower().Replace(' ', '-'));
-            await ReplyAsync("Campaign found successfully!", false, EmbedUtils.CampaignEmbed(campaign));
-            return GameMasterResult.SuccessResult($"Campaign({name}) found successfully.");
+            try
+            {
+                var campaign = await _service.Get(Context.Guild.Id.ToString(), name.ToLower().Replace(' ', '-'));
+                await ReplyAsync("Campaign found successfully!", false, EmbedUtils.CampaignEmbed(campaign));
+                return GameMasterResult.SuccessResult($"Campaign({name}) found successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+            }
         }
 
         [Command("server"), Alias("*"), Summary("Returns information about all campaigns on this server.")]
         public async Task<RuntimeResult> GetAllAsync()
         {
-            var campaigns = _service.GetForServer(Context.Guild.Id.ToString());
-            await ReplyAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
-            return GameMasterResult.SuccessResult($"Campaigns({campaigns.Count()}) found successfully.");
+            try
+            {
+                var campaigns = _service.GetForServer(Context.Guild.Id.ToString());
+                await ReplyAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
+                return GameMasterResult.SuccessResult($"Campaigns({campaigns.Count()}) found successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+            }
         }
 
         [Command("self"), Alias("me"), Summary("Returns information about all campaigns for this player.")]
@@ -209,10 +236,16 @@ namespace GameMasterBot.Modules
             var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, Context.User.Username, StringComparison.CurrentCultureIgnoreCase));
             if (guildUser == null)
                 return GameMasterResult.ErrorResult("The user specified does not exist in this server");
-
-            var campaigns = _service.GetForPlayer(Context.Guild.Id.ToString(), guildUser.Id.ToString());
-            await guildUser.SendMessageAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
-            return GameMasterResult.SuccessResult($"Campaigns({campaigns.Count()}) found successfully.");
+            try
+            {
+                var campaigns = _service.GetForPlayer(Context.Guild.Id.ToString(), guildUser.Id.ToString());
+                await guildUser.SendMessageAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
+                return GameMasterResult.SuccessResult($"Campaigns({campaigns.Count()}) found successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+            }
         }
     }
 }

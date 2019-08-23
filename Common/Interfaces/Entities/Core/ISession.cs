@@ -8,5 +8,7 @@ namespace Common.Interfaces.Entities.Core
         string CampaignId { get; set; }
         string Schedule { get; set; }
         DateTime Date { get; set; }
+        bool ReminderSent { get; set; }
+        bool TriggerSent { get; set; }
     }
 }
