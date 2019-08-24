@@ -11,14 +11,15 @@ using GameMasterBot.Utils;
 
 namespace GameMasterBot.Modules
 {
-    [Group("campaign")]
+    [RequireContext(ContextType.Guild)]
+    [Group("campaign"), Name("Campaign"), Summary("Commands relating to managing campaigns.")]
     public class CampaignModule : ModuleBase<SocketCommandContext>
     {
         private readonly CampaignService _service;
 
         public CampaignModule(CampaignService service) => _service = service;
 
-        [Command("add", RunMode = RunMode.Async), Alias("+"), Summary("Creates a new campaign on this server.")]
+        [Command("add", RunMode = RunMode.Async), Name("add"), Alias("+"), Summary("Creates a new campaign on this server.")]
         public async Task<RuntimeResult> AddAsync(
             [Summary("The campaign's name.")] string name,
             [Summary("The campaign's system.")] string system,
@@ -77,87 +78,98 @@ namespace GameMasterBot.Modules
 
             #endregion
 
-            // Send input to service to create the campaign in the database
-            var campaign = _service.Create(name, system, gameMaster, url, players, Context.User.ToString(), Context.Guild.Name, Context.Guild.Id);
-
-            #region Guild Administration
-
-            // TODO Move elsewhere, and allow users to pick color
-            Color roleColor;
-            var random = new Random();
-            switch (random.Next(5))
+            try
             {
-                case 0:
-                    roleColor = Color.Blue;
-                    break;
-                case 1:
-                    roleColor = Color.Green;
-                    break;
-                case 2:
-                    roleColor = Color.Purple;
-                    break;
-                case 3:
-                    roleColor = Color.Orange;
-                    break;
-                case 4:
-                    roleColor = Color.Red;
-                    break;
-                case 5:
-                    roleColor = Color.Teal;
-                    break;
-                default:
-                    roleColor = Color.Default;
-                    break;
+                // Send input to service to create the campaign in the database
+                var campaign = _service.Create(name, system, gameMaster, url, players, Context.User.ToString(), Context.Guild.Name, Context.Guild.Id);
+
+                #region Guild Administration
+
+                // TODO Move elsewhere, and allow users to pick color
+                Color roleColor;
+                var random = new Random();
+                switch (random.Next(5))
+                {
+                    case 0:
+                        roleColor = Color.Blue;
+                        break;
+                    case 1:
+                        roleColor = Color.Green;
+                        break;
+                    case 2:
+                        roleColor = Color.Purple;
+                        break;
+                    case 3:
+                        roleColor = Color.Orange;
+                        break;
+                    case 4:
+                        roleColor = Color.Red;
+                        break;
+                    case 5:
+                        roleColor = Color.Teal;
+                        break;
+                    default:
+                        roleColor = Color.Default;
+                        break;
+                }
+
+                var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Player") ??
+                    (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Player", null, roleColor).Result;
+
+                var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Game Master") ??
+                                 (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Game Master", null, roleColor).Result;
+
+                // Create the category channel for this campaign's system if one does not already exist
+                var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == campaign.System) ??
+                                                  (ICategoryChannel)Context.Guild.CreateCategoryChannelAsync(campaign.System).Result;
+
+                // Create the text channel for this campaign if one does not exist
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaign.Id) ??
+                                          (ITextChannel)Context.Guild.CreateTextChannelAsync(campaign.Id, channel =>
+                                          {
+                                              channel.CategoryId = campaignCategoryChannel.Id;
+                                              channel.Topic = $"Channel for discussing the {campaign.System} campaign {campaign.Name}";
+                                          }).Result;
+
+                // Set the permissions on the campaign's text channel
+                await campaignTextChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny, sendMessages: PermValue.Deny, manageChannel: PermValue.Deny));
+                await campaignTextChannel.AddPermissionOverwriteAsync(playerRole, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, manageMessages: PermValue.Deny, manageChannel: PermValue.Deny));
+                await campaignTextChannel.AddPermissionOverwriteAsync(gmRole, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, manageMessages: PermValue.Allow, manageChannel: PermValue.Allow));
+
+                // Create the voice channel for this campaign if one does not exist
+                var campaignVoiceChannel = Context.Guild.VoiceChannels.FirstOrDefault(chan => chan.Name == campaign.Name) ??
+                                           (IVoiceChannel)Context.Guild.CreateVoiceChannelAsync(campaign.Name,
+                                               channel => channel.CategoryId = campaignCategoryChannel.Id).Result;
+
+                // Set the permissions on the campaign's voice channel
+                await campaignVoiceChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                await campaignVoiceChannel.AddPermissionOverwriteAsync(playerRole, new OverwritePermissions(viewChannel: PermValue.Allow));
+                await campaignVoiceChannel.AddPermissionOverwriteAsync(gmRole, new OverwritePermissions(viewChannel: PermValue.Allow, manageChannel: PermValue.Allow));
+
+                // Add the gm role to the game master
+                await Context.Guild.Users.First(user => user.Username == gameMaster || user.Nickname == gameMaster).AddRoleAsync(gmRole);
+
+                // Add the campaign role to each of the players
+                foreach (var player in campaign.Players)
+                    await Context.Guild.Users.First(user =>
+                            string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase) ||
+                            string.Equals(user.Nickname, player, StringComparison.CurrentCultureIgnoreCase))
+                        .AddRoleAsync(playerRole);
+
+                #endregion
+
+                // Send a rich text embed representing the new campaign
+                await ReplyAsync("Campaign created successfully!", false, EmbedUtils.CampaignEmbed(campaign));
+                return GameMasterResult.SuccessResult($"Campaign({campaign.Name}) created successfully.");
             }
-
-            var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Player") ??
-                (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Player", null, roleColor).Result;
-
-            // Create the category channel for this campaign's system if one does not already exist
-            var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == campaign.System) ??
-                                              (ICategoryChannel)Context.Guild.CreateCategoryChannelAsync(campaign.System).Result;
-
-            // Create the text channel for this campaign if one does not exist
-            var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaign.Id) ??
-                                      (ITextChannel)Context.Guild.CreateTextChannelAsync(campaign.Id, channel =>
-                                      {
-                                          channel.CategoryId = campaignCategoryChannel.Id;
-                                          channel.Topic = $"Channel for discussing the {campaign.System} campaign {campaign.Name}";
-                                      }).Result;
-
-            // Set the permissions on the campaign's text channel
-            await campaignTextChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole,
-                new OverwritePermissions(viewChannel: PermValue.Deny));
-            await campaignTextChannel.AddPermissionOverwriteAsync(campaignRole,
-                new OverwritePermissions(viewChannel: PermValue.Allow));
-
-            // Create the voice channel for this campaign if one does not exist
-            var campaignVoiceChannel = Context.Guild.VoiceChannels.FirstOrDefault(chan => chan.Name == campaign.Name) ??
-                                       (IVoiceChannel)Context.Guild.CreateVoiceChannelAsync(campaign.Name,
-                                           channel => channel.CategoryId = campaignCategoryChannel.Id).Result;
-
-            // Set the permissions on the campaign's voice channel
-            await campaignVoiceChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole,
-                new OverwritePermissions(viewChannel: PermValue.Deny));
-            await campaignVoiceChannel.AddPermissionOverwriteAsync(campaignRole,
-                new OverwritePermissions(viewChannel: PermValue.Allow));
-
-            // Add the campaign role to each of the players
-            foreach (var player in campaign.Players)
-                await Context.Guild.Users.First(user =>
-                        string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase) ||
-                        string.Equals(user.Nickname, player, StringComparison.CurrentCultureIgnoreCase))
-                    .AddRoleAsync(campaignRole);
-
-            #endregion
-
-            // Send a rich text embed representing the new campaign
-            await ReplyAsync("Campaign created successfully!", false, EmbedUtils.CampaignEmbed(campaign));
-
-            return GameMasterResult.SuccessResult($"Campaign({campaign.Name}) created successfully.");
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+            }
         }
 
-        [Command("remove", RunMode = RunMode.Async), Alias("-"), Summary("Removes a campaign from this server.")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("remove", RunMode = RunMode.Async), Name("remove"), Alias("-"), Summary("Removes a campaign from this server.")]
         public async Task<RuntimeResult> RemoveAsync(
             [Summary("The Campaign's name.")] string name)
         {
@@ -183,16 +195,18 @@ namespace GameMasterBot.Modules
             var voiceChannel = Context.Guild.VoiceChannels.FirstOrDefault(channel => channel.Name.ToLower().Replace(' ', '-') == campaignId);
             if (voiceChannel != null) await Context.Guild.GetVoiceChannel(voiceChannel.Id).DeleteAsync();
 
-            // Delete the role for this campaign if it exists
+            // Delete the roles for this campaign if they exists
             var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"{campaignId}-player");
             if (campaignRole != null) await Context.Guild.GetRole(campaignRole.Id).DeleteAsync();
+            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"{campaignId}-game-master");
+            if (gmRole != null) await Context.Guild.GetRole(gmRole.Id).DeleteAsync();
 
             #endregion
 
             try
             {
                 _service.Remove(Context.Guild.Id.ToString(), campaignId);
-                await ReplyAsync($"Campaign removed successfully!");
+                await ReplyAsync("Campaign removed successfully!");
                 return GameMasterResult.SuccessResult($"Campaign({name}) removed successfully.");
             }
             catch (Exception e)
@@ -201,7 +215,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("info"), Summary("Returns information about the campaign belonging to this channel.")]
+        [Command("info"), Name("info"), Summary("Returns information about the campaign belonging to this channel.")]
         public async Task<RuntimeResult> GetAsync()
         {
             try
@@ -216,7 +230,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("info"), Summary("Returns information about the campaign specified.")]
+        [Command("info"), Name("info"), Summary("Returns information about the campaign specified.")]
         public async Task<RuntimeResult> GetAsync(
             [Summary("The Campaign's name.")] string name)
         {
@@ -244,14 +258,14 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("server"), Alias("*"), Summary("Returns information about all campaigns on this server.")]
+        [Command("server"), Name("server"), Alias("*"), Summary("Returns information about all campaigns on this server.")]
         public async Task<RuntimeResult> GetAllAsync()
         {
             try
             {
                 var campaigns = _service.GetForServer(Context.Guild.Id.ToString());
                 await ReplyAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
-                return GameMasterResult.SuccessResult($"Campaigns({campaigns.Count()}) found successfully.");
+                return GameMasterResult.SuccessResult($"Campaigns found successfully.");
             }
             catch (Exception e)
             {
@@ -259,7 +273,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("self"), Alias("me"), Summary("Returns information about all campaigns for this player.")]
+        [Command("self"), Name("self"), Alias("me"), Summary("Returns information about all campaigns for this player.")]
         public async Task<RuntimeResult> GetForPlayerAsync()
         {
             var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, Context.User.Username, StringComparison.CurrentCultureIgnoreCase));
@@ -269,7 +283,7 @@ namespace GameMasterBot.Modules
             {
                 var campaigns = _service.GetForPlayer(Context.Guild.Id.ToString(), guildUser.Id.ToString());
                 await guildUser.SendMessageAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
-                return GameMasterResult.SuccessResult($"Campaigns({campaigns.Count()}) found successfully.");
+                return GameMasterResult.SuccessResult($"Campaigns found successfully.");
             }
             catch (Exception e)
             {

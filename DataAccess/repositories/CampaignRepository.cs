@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Common.Interfaces.DataAccess.Repositories;
 using Common.Interfaces.Entities.Core;
@@ -13,18 +14,21 @@ namespace DataAccess.Repositories
     {
         public GameMasterContext GameMasterContext => Context as GameMasterContext;
 
-        public CampaignRepository(GameMasterContext context) : base(context) { }
+        public CampaignRepository(DynamoDBContext context) : base(context) { }
 
-        public async Task<ICampaign> Get(string serverId, string campaignId) => await Context.LoadAsync<Campaign>($"Server#{serverId}", $"Campaign#{campaignId}");
+        public async Task<ICampaign> Get(string serverId, string campaignId) => await GameMasterContext
+            .LoadAsync<Campaign>(
+                $"Server#{serverId}", 
+                $"Campaign#{campaignId}");
 
-        public IEnumerable<ICampaign> GetForServer(string serverId) => Context
+        public IEnumerable<ICampaign> GetForServer(string serverId) => GameMasterContext
             .QueryAsync<Campaign>(
                 $"Server#{serverId}",
                 QueryOperator.BeginsWith,
                 new[] { "Campaign#" })
             .GetNextSetAsync().Result;
 
-        public IEnumerable<ICampaign> GetForPlayer(string serverId, string playerName) => Context
+        public IEnumerable<ICampaign> GetForPlayer(string serverId, string playerName) => GameMasterContext
             // TODO: Add filters
             .QueryAsync<Campaign>(
                 $"Server#{serverId}",
@@ -40,11 +44,11 @@ namespace DataAccess.Repositories
             campaign.Ts = DateTime.Now;
             campaign.Entity = "Campaign";
             // Save the campaign object
-            Context.SaveAsync(campaign as Campaign);
+            GameMasterContext.SaveAsync(campaign as Campaign);
         }
 
         public void Remove(string serverId, string campaignId) =>
-            Context.DeleteAsync(new DynamoDbItem
+            GameMasterContext.DeleteAsync(new DynamoDbItem
             {
                 Pk = $"Server#{serverId}",
                 Sk = $"Campaign#{campaignId}"

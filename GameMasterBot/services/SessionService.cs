@@ -4,13 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common.Interfaces.DataAccess;
 using Common.Interfaces.Entities.Core;
-using Discord.Commands;
 using Discord.WebSocket;
 using Entities.Core;
 
 namespace GameMasterBot.Services
 {
-    public class SessionService: ModuleBase<SocketCommandContext>
+    public class SessionService
     {
         private readonly DiscordSocketClient _client;
         private readonly IUnitOfWork _unitOfWork;
@@ -73,7 +72,7 @@ namespace GameMasterBot.Services
                 }
                 else if (!session.ReminderSent)
                 {
-                    await channelToNotify.SendMessageAsync("@here Attention! Today's session will begin in under 30 minutes!");
+                    await channelToNotify.SendMessageAsync("@here Attention! Today's session will begin in ~30 minutes!");
                     session.ReminderSent = true;
                 }
                 await _unitOfWork.Sessions.Update(session);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utils;
@@ -7,14 +8,16 @@ using GameMasterBot.Utils;
 
 namespace GameMasterBot.Modules
 {
-    [Group("session")]
+    [RequireContext(ContextType.Guild)]
+    [Group("session"), Name("Session"), Summary("Commands relating to managing sessions.")]
     public class SessionModule: ModuleBase<SocketCommandContext>
     {
         private readonly SessionService _service;
 
         public SessionModule(SessionService service) => _service = service;
 
-        [Command("add"), Summary("Creates a new session for this campaign.")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("add"), Name("add"), Alias("+"), Summary("Creates a new session for this campaign.")]
         public async Task<RuntimeResult> AddAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time)
@@ -42,7 +45,8 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("schedule"), Summary("Schedules a new session for this session")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("schedule"), Name("schedule"), Alias("++"), Summary("Schedules a new session for this session")]
         public async Task<RuntimeResult> AddAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time,
@@ -88,14 +92,15 @@ namespace GameMasterBot.Modules
             return GameMasterResult.SuccessResult($"Session({session.Date}-{schedule}) scheduled successfully.");
         }
 
-        [Command("cancel"), Summary("Cancels the next session for this campaign")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("cancel"), Name("cancel"), Alias("-"), Summary("Cancels the next session for this campaign")]
         public async Task<RuntimeResult> CancelAsync()
         {
             try
             {
                 await _service.Cancel(Context.Channel.Name);
-                await ReplyAsync("Session de-scheduled successfully.");
-                return GameMasterResult.SuccessResult("Session de-scheduled cancelled successfully.");
+                await ReplyAsync("Session cancel successfully.");
+                return GameMasterResult.SuccessResult("Session cancelled successfully.");
             }
             catch (Exception e)
             {
@@ -103,7 +108,8 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("deschedule"), Summary("Deschedules the next session for this campaign")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("deschedule"), Name("deschedule"), Alias("--"), Summary("Deschedule the next session for this campaign")]
         public async Task<RuntimeResult> DescheduleAsync()
         {
             try
@@ -118,7 +124,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("next"), Summary("Get the next session for this campaign")]
+        [Command("next"), Name("next"), Summary("Get the next session for this campaign")]
         public async Task<RuntimeResult> NextAsync()
         {
             try
