@@ -36,7 +36,7 @@ namespace GameMasterBot.Modules
             try
             {
                 var session = _service.Create(Context.Channel.Id, Context.Channel.Name, "AdHoc", parsedDate.ToUniversalTime()).Result;
-                await ReplyAsync($"AdHoc session added for {session.Date.ToLocalTime()}");
+                await ReplyAsync($"AdHoc session added for {session.Date.ToUniversalTime()} UTC.");
                 return GameMasterResult.SuccessResult($"Session({date}-{time}) added successfully.");
             }
             catch (Exception e)
@@ -88,7 +88,7 @@ namespace GameMasterBot.Modules
             #endregion
 
             var session = _service.Create(Context.Channel.Id, Context.Channel.Name, schedule, parsedDate.ToUniversalTime()).Result;
-            await ReplyAsync($"{schedule} session scheduled, starting on {session.Date.ToLocalTime()}");
+            await ReplyAsync($"{schedule} session scheduled, starting on {session.Date.ToUniversalTime()} UTC.");
             return GameMasterResult.SuccessResult($"Session({session.Date}-{schedule}) scheduled successfully.");
         }
 
@@ -133,7 +133,7 @@ namespace GameMasterBot.Modules
                 if (session == null)
                     await ReplyAsync("The next session for this campaign has not been scheduled yet.");
                 else
-                    await ReplyAsync($"The next session for this campaign will be on {session.Date.ToLocalTime()}.");
+                    await ReplyAsync($"The next session for this campaign will be on {session.Date.ToUniversalTime()} UTC.");
                 return GameMasterResult.SuccessResult("Next session found successfully.");
             }
             catch (Exception e)
