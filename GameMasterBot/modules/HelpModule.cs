@@ -9,7 +9,7 @@ namespace GameMasterBot.modules
 {
     [RequireContext(ContextType.Guild)]
     [Name("Help")]
-    public class HelpModule: ModuleBase<SocketCommandContext>
+    public class HelpModule : ModuleBase<SocketCommandContext>
     {
         private readonly CommandService _service;
 
@@ -21,7 +21,7 @@ namespace GameMasterBot.modules
             try
             {
                 await ReplyAsync("Commands retrieved successfully!", false, EmbedUtils.ModulesEmbed(_service.Modules));
-                return GameMasterResult.SuccessResult("Commands retrieved successfully.");
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -31,7 +31,8 @@ namespace GameMasterBot.modules
 
         [Command("help"), Alias("?"), Summary("Displays information about the specified command.")]
         public async Task<RuntimeResult> HelpAsync(
-            [Summary("The command to be searched for.")] string command)
+            [Summary("The command to be searched for.")]
+            string command)
         {
             #region Validation
 
@@ -47,13 +48,28 @@ namespace GameMasterBot.modules
 
             try
             {
-                await ReplyAsync("Commands found successfully!", false, EmbedUtils.CommandsEmbed(searchResult.Commands));
-                return GameMasterResult.SuccessResult("Command found successfully.");
+                await ReplyAsync("Commands found successfully!", false,
+                    EmbedUtils.CommandsEmbed(searchResult.Commands));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
                 return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
             }
+        }
+
+        [Command("version"), Alias("v"), Summary("Displays information about the specified command.")]
+        public async Task<RuntimeResult> VersionAsync()
+        {
+            await ReplyAsync("GameMasterBot Alpha v0.1.1");
+            return GameMasterResult.SuccessResult();
+        }
+
+        [Command("roadmap"), Alias("repo", "repository", "issues"), Summary("Displays information about the specified command.")]
+        public async Task<RuntimeResult> RoadmapAsync()
+        {
+            await ReplyAsync("You can check the roadmap and source code at https://github.com/BlueishLeaf/GameMasterBot");
+            return GameMasterResult.SuccessResult();
         }
     }
 }
