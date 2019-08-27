@@ -9,12 +9,12 @@ GameMasterBot is a discord bot for managing TRPG campaigns. With it, you can eas
 - A more streamlined approach to creating campaigns.
 - Provide a cloudformations template to automate the infrastructure required to build the bot.
 
-## How to Build
+## How to Build and Run
 - Install .Net Core 2.2
 - Set the following environmental variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS, and DISCORD_TOKEN
 - Create a DynamoDb table with the specifications as below.
 
-## DynamoDb Table
+### DynamoDb Table
 - Name the table "GameMasterBotTbl".
 - Set "Pk" as the partition key and "Sk" as the sort key.
 - Create a global secondary index called "Entity-Sk-Index", which has "Entity" as its partition key, and "Sk" as its sort key.
