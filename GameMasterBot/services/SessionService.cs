@@ -96,11 +96,12 @@ namespace GameMasterBot.Services
             }
         }
 
-        public async Task<ISession> Create(ulong channelId, string campaignId,  string schedule, DateTime date)
+        public async Task<ISession> Create(ulong channelId, ulong serverId, string campaignId,  string schedule, DateTime date)
         {
             var session = new Session
             {
                 CampaignId = campaignId,
+                ServerId = serverId,
                 ChannelId = channelId,
                 Schedule = schedule,
                 Date = date,
@@ -112,17 +113,41 @@ namespace GameMasterBot.Services
             return session;
         }
 
-        public async Task Cancel(string campaignId)
+        public async Task Cancel(string campaignId, bool deschedule)
         {
-            var nextSession = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow).First(session => session.CampaignId == campaignId);
+            var nextSession = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow).FirstOrDefault(session => session.CampaignId == campaignId);
+            if (nextSession == null)
+                throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
             await _unitOfWork.Sessions.Remove(nextSession);
-            await CreateNextIfNecessary(nextSession);
+            if (deschedule) await CreateNextIfNecessary(nextSession);
+            SetTimerDelay();
+        }
+
+        public async Task CancelForDate(string campaignId, DateTime date, bool deschedule)
+        {
+            var sessions = _unitOfWork.Sessions.GetAllAfterDate(date).Where(session => session.CampaignId == campaignId).ToList();
+            if (!sessions.Any())
+                throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
+            await _unitOfWork.Sessions.RemoveRange(sessions);
+            if (deschedule) foreach (var session in sessions) await CreateNextIfNecessary(session);
+            SetTimerDelay();
+        }
+
+        public async Task CancelForDateTime(string campaignId, DateTime date, bool deschedule)
+        {
+            var sessionSpecified = _unitOfWork.Sessions.GetAllAfterDate(date).FirstOrDefault(session => session.CampaignId == campaignId);
+            if (sessionSpecified == null)
+                throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
+            await _unitOfWork.Sessions.Remove(sessionSpecified);
+            if (deschedule) await CreateNextIfNecessary(sessionSpecified);
             SetTimerDelay();
         }
 
         public async Task DeSchedule(string campaignId)
         {
-            var nextSession = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow).First(session => session.CampaignId == campaignId);
+            var nextSession = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow).FirstOrDefault(session => session.CampaignId == campaignId);
+            if (nextSession == null)
+                throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
             await _unitOfWork.Sessions.Remove(nextSession);
             SetTimerDelay();
         }

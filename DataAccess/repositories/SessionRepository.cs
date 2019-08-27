@@ -11,9 +11,7 @@ namespace DataAccess.Repositories
 {
     public class SessionRepository: Repository, ISessionRepository
     {
-        public GameMasterContext GameMasterContext => Context as GameMasterContext;
-
-        public SessionRepository(GameMasterContext context) : base(context) { }
+        public SessionRepository(DynamoDBContext context) : base(context) { }
 
         public IEnumerable<ISession> GetAllAfterDate(DateTime date) => 
             Context.QueryAsync<Session>(
@@ -26,9 +24,9 @@ namespace DataAccess.Repositories
                 })
                 .GetNextSetAsync().Result;
 
-        public IEnumerable<ISession> GetForCampaign(string campaignId) =>
+        public IEnumerable<ISession> GetForCampaign(ulong serverId, string campaignId) =>
             Context.QueryAsync<Session>(
-                $"Campaign#{campaignId}",
+                $"Campaign#{serverId}#{campaignId}",
                 QueryOperator.BeginsWith,
                 new[] {"Session#"})
                 .GetNextSetAsync().Result;
@@ -40,7 +38,7 @@ namespace DataAccess.Repositories
 
         public async Task Add(ISession session)
         {
-            session.Pk = $"Campaign#{session.CampaignId}";
+            session.Pk = $"Campaign#{session.ServerId}#{session.CampaignId}";
             session.Sk = $"Session#{session.Date:O}";
             session.Entity = "Session";
             session.Ts = DateTime.UtcNow;
@@ -50,5 +48,12 @@ namespace DataAccess.Repositories
         public async Task Update(ISession session) => await Context.SaveAsync(session as Session);
 
         public async Task Remove(ISession session) => await Context.DeleteAsync(session as Session);
+
+        public async Task RemoveRange(IEnumerable<ISession> sessions)
+        {
+            var batch = Context.CreateBatchWrite<Session>();
+            foreach (var session in sessions) batch.AddDeleteItem(session as Session);
+            await batch.ExecuteAsync();
+        }
     }
 }

@@ -74,8 +74,8 @@ namespace GameMasterBot.Utils
             }).ToList();
 
         private static List<EmbedFieldBuilder> BuildFieldsForModules(IEnumerable<ModuleInfo> modules) =>
-            (from module in modules let description = module.Commands.Aggregate<CommandInfo, string>(null, (current, command) => current + $"*{command.Name}* - {command.Summary}\n")
-            select new EmbedFieldBuilder {Name = module.Group != null ? $"{module.Name} Commands - !{module.Group}": $"{module.Name} Commands", Value = description, IsInline = false}).ToList();
+            (from module in modules let description = module.Commands.Aggregate<CommandInfo, string>(null, (current, command) => current + $"`{command.Name}` - {command.Summary}\n")
+            select new EmbedFieldBuilder {Name = module.Group != null ? $"{module.Name} Commands - `!{module.Group} 'command'`": $"{module.Name} Commands", Value = description, IsInline = false}).ToList();
 
         private static List<EmbedFieldBuilder> BuildFieldsForCampaigns(IEnumerable<ICampaign> campaigns)
         {

@@ -35,13 +35,13 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _service.Create(Context.Channel.Id, Context.Channel.Name, "AdHoc", parsedDate.ToUniversalTime()).Result;
+                var session = _service.Create(Context.Channel.Id, Context.Guild.Id, Context.Channel.Name, "AdHoc", parsedDate.ToUniversalTime()).Result;
                 await ReplyAsync($"AdHoc session added for {session.Date.ToUniversalTime()} UTC.");
                 return GameMasterResult.SuccessResult($"Session({date}-{time}) added successfully.");
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
 
@@ -87,24 +87,123 @@ namespace GameMasterBot.Modules
 
             #endregion
 
-            var session = _service.Create(Context.Channel.Id, Context.Channel.Name, schedule, parsedDate.ToUniversalTime()).Result;
-            await ReplyAsync($"{schedule} session scheduled, starting on {session.Date.ToUniversalTime()} UTC.");
-            return GameMasterResult.SuccessResult($"Session({session.Date}-{schedule}) scheduled successfully.");
-        }
-
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("cancel"), Name("cancel"), Alias("-"), Summary("Cancels the next session for this campaign")]
-        public async Task<RuntimeResult> CancelAsync()
-        {
             try
             {
-                await _service.Cancel(Context.Channel.Name);
-                await ReplyAsync("Session cancel successfully.");
-                return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                var session = _service.Create(Context.Channel.Id, Context.Guild.Id, Context.Channel.Name, schedule, parsedDate.ToUniversalTime()).Result;
+                await ReplyAsync($"{schedule} session scheduled, starting on {session.Date.ToUniversalTime()} UTC.");
+                return GameMasterResult.SuccessResult($"Session({session.Date}-{schedule}) scheduled successfully.");
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
+
+
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Group("cancel")]
+        public class CancelModule : ModuleBase<SocketCommandContext>
+        {
+            private readonly SessionService _service;
+
+            public CancelModule(SessionService service) => _service = service;
+
+            [Command, Name("cancel next"), Alias("next"), Summary("Cancels the next session for a campaign")]
+            public async Task<RuntimeResult> CancelNextAsync(
+                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            {
+                #region Validation
+
+                #region Campaign
+
+                if (campaign == null)
+                    campaign = Context.Channel.Name;
+
+                #endregion
+
+                #endregion
+
+                try
+                {
+                    await _service.Cancel(campaign, false);
+                    await ReplyAsync("Session cancel successfully.");
+                    return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                }
+                catch (Exception e)
+                {
+                    return GameMasterResult.ErrorResult(e.Message);
+                }
+            }
+
+            [Command("day"), Name("cancel day"), Alias("date"), Summary("Cancels all sessions on a given date for a campaign")]
+            public async Task<RuntimeResult> CancelDayAsync(
+                [Summary("The date on which the session will take place.")] string date,
+                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            {
+                #region Validation
+
+                #region Date
+
+                if (!DateTime.TryParse(date, out var parsedDate))
+                    return GameMasterResult.ErrorResult("Invalid date.");
+
+                #endregion
+
+                #region Campaign
+
+                if (campaign == null)
+                    campaign = Context.Channel.Name;
+
+                #endregion
+
+                #endregion
+
+                try
+                {
+                    await _service.CancelForDate(campaign, parsedDate.ToUniversalTime(), false);
+                    await ReplyAsync($"Sessions for {parsedDate} cancelled successfully.");
+                    return GameMasterResult.SuccessResult("Sessions cancelled successfully.");
+                }
+                catch (Exception e)
+                {
+                    return GameMasterResult.ErrorResult(e.Message);
+                }
+            }
+
+            [Command, Name("cancel specific"), Alias("specific"), Summary("Cancels a specific session for a campaign")]
+            public async Task<RuntimeResult> CancelSpecificAsync(
+                [Summary("The date on which the session will take place.")] string date,
+                [Summary("The time at which the session wil take place.")] string time,
+                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            {
+                #region Validation
+
+                #region Date
+
+                if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
+                    return GameMasterResult.ErrorResult("Invalid date.");
+
+                #endregion
+
+                #region Campaign
+
+                if (campaign == null)
+                    campaign = Context.Channel.Name;
+
+                #endregion
+
+                #endregion
+
+                try
+                {
+                    await _service.CancelForDateTime(campaign, parsedDate.ToUniversalTime(), false);
+                    await ReplyAsync("Session cancel successfully.");
+                    return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                }
+                catch (Exception e)
+                {
+                    return GameMasterResult.ErrorResult(e.Message);
+                }
             }
         }
 
@@ -114,13 +213,13 @@ namespace GameMasterBot.Modules
         {
             try
             {
-                await _service.DeSchedule(Context.Channel.Name);
+                await _service.Cancel(Context.Channel.Name, true);
                 await ReplyAsync("Session de-scheduled successfully.");
                 return GameMasterResult.SuccessResult("Session de-scheduled cancelled successfully.");
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
 
@@ -138,7 +237,7 @@ namespace GameMasterBot.Modules
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
     }

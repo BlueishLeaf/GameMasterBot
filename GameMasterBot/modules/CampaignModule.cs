@@ -6,7 +6,6 @@ using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utils;
-
 // ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
