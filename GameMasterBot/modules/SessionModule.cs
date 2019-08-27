@@ -99,6 +99,60 @@ namespace GameMasterBot.Modules
             }
         }
 
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("deschedule"), Name("deschedule"), Alias("--"), Summary("Deschedules a recurring session for this campaign")]
+        public async Task<RuntimeResult> DescheduleAsync(
+            [Summary("The date on which the session will take place.")] string date,
+            [Summary("The time at which the session will take place.")] string time,
+            [Summary("The campaign that the session belongs to.")] string campaign = null)
+        {
+            #region Validation
+
+            #region Date
+
+            if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
+                return GameMasterResult.ErrorResult("Invalid date.");
+
+            #endregion
+
+            #region Campaign
+
+            if (campaign == null)
+                campaign = Context.Channel.Name;
+
+            #endregion
+
+            #endregion
+            try
+            {
+                await _service.Deschedule(campaign, parsedDate);
+                await ReplyAsync("Session de-scheduled successfully.");
+                return GameMasterResult.SuccessResult("Session de-scheduled cancelled successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
+
+        [Command("next"), Name("next"), Summary("Get the next session for this campaign")]
+        public async Task<RuntimeResult> NextAsync()
+        {
+            try
+            {
+                var session = _service.GetNext(Context.Channel.Name);
+                if (session == null)
+                    await ReplyAsync("The next session for this campaign has not been scheduled yet.");
+                else
+                    await ReplyAsync($"The next session for this campaign will be on {session.Date.ToUniversalTime()} UTC.");
+                return GameMasterResult.SuccessResult("Next session found successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
+
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         [Group("cancel")]
@@ -125,7 +179,7 @@ namespace GameMasterBot.Modules
 
                 try
                 {
-                    await _service.Cancel(campaign, false);
+                    await _service.CancelNext(campaign);
                     await ReplyAsync("Session cancel successfully.");
                     return GameMasterResult.SuccessResult("Session cancelled successfully.");
                 }
@@ -160,7 +214,7 @@ namespace GameMasterBot.Modules
 
                 try
                 {
-                    await _service.CancelForDate(campaign, parsedDate.ToUniversalTime(), false);
+                    await _service.CancelForDay(campaign, parsedDate.ToUniversalTime());
                     await ReplyAsync($"Sessions for {parsedDate} cancelled successfully.");
                     return GameMasterResult.SuccessResult("Sessions cancelled successfully.");
                 }
@@ -170,8 +224,47 @@ namespace GameMasterBot.Modules
                 }
             }
 
+            [Command, Name("cancel period"), Alias("range"), Summary("Cancels sessions on a range of dates for a campaign.")]
+            public async Task<RuntimeResult> CancelPeriodAsync(
+                [Summary("The start of the date range.")] string after,
+                [Summary("The end of the date range.")] string before,
+                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            {
+                #region Validation
+
+                #region Date
+
+                if (!DateTime.TryParse(after, out var parsedAfterDate))
+                    return GameMasterResult.ErrorResult("Invalid 'After' date.");
+
+                if (!DateTime.TryParse(before, out var parsedBeforeDate))
+                    return GameMasterResult.ErrorResult("Invalid 'Before' date.");
+
+                #endregion
+
+                #region Campaign
+
+                if (campaign == null)
+                    campaign = Context.Channel.Name;
+
+                #endregion
+
+                #endregion
+
+                try
+                {
+                    await _service.CancelForPeriod(campaign, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
+                    await ReplyAsync("Session cancel successfully.");
+                    return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                }
+                catch (Exception e)
+                {
+                    return GameMasterResult.ErrorResult(e.Message);
+                }
+            }
+
             [Command, Name("cancel specific"), Alias("specific"), Summary("Cancels a specific session for a campaign")]
-            public async Task<RuntimeResult> CancelSpecificAsync(
+            public async Task<RuntimeResult> CancelDayTimeAsync(
                 [Summary("The date on which the session will take place.")] string date,
                 [Summary("The time at which the session wil take place.")] string time,
                 [Summary("The campaign that the session belongs to.")] string campaign = null)
@@ -196,7 +289,7 @@ namespace GameMasterBot.Modules
 
                 try
                 {
-                    await _service.CancelForDateTime(campaign, parsedDate.ToUniversalTime(), false);
+                    await _service.CancelForDayTime(campaign, parsedDate.ToUniversalTime());
                     await ReplyAsync("Session cancel successfully.");
                     return GameMasterResult.SuccessResult("Session cancelled successfully.");
                 }
@@ -204,40 +297,6 @@ namespace GameMasterBot.Modules
                 {
                     return GameMasterResult.ErrorResult(e.Message);
                 }
-            }
-        }
-
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("deschedule"), Name("deschedule"), Alias("--"), Summary("Deschedule the next session for this campaign")]
-        public async Task<RuntimeResult> DescheduleAsync()
-        {
-            try
-            {
-                await _service.Cancel(Context.Channel.Name, true);
-                await ReplyAsync("Session de-scheduled successfully.");
-                return GameMasterResult.SuccessResult("Session de-scheduled cancelled successfully.");
-            }
-            catch (Exception e)
-            {
-                return GameMasterResult.ErrorResult(e.Message);
-            }
-        }
-
-        [Command("next"), Name("next"), Summary("Get the next session for this campaign")]
-        public async Task<RuntimeResult> NextAsync()
-        {
-            try
-            {
-                var session = _service.GetNext(Context.Channel.Name);
-                if (session == null)
-                    await ReplyAsync("The next session for this campaign has not been scheduled yet.");
-                else
-                    await ReplyAsync($"The next session for this campaign will be on {session.Date.ToUniversalTime()} UTC.");
-                return GameMasterResult.SuccessResult("Next session found successfully.");
-            }
-            catch (Exception e)
-            {
-                return GameMasterResult.ErrorResult(e.Message);
             }
         }
     }

@@ -15,20 +15,31 @@ namespace DataAccess.Repositories
 
         public IEnumerable<ISession> GetAllAfterDate(DateTime date) => 
             Context.QueryAsync<Session>(
-                "Session",
-                QueryOperator.GreaterThanOrEqual,
-                new[] { $"Session#{date:O}" },
-                new DynamoDBOperationConfig
-                {
-                    IndexName = "Entity-Sk-Index"
-                })
+                    "Session",
+                    QueryOperator.GreaterThanOrEqual,
+                    new[] { $"Session#{date:O}" },
+                    new DynamoDBOperationConfig
+                    {
+                        IndexName = "Entity-Sk-Index"
+                    })
+                .GetNextSetAsync().Result;
+
+        public IEnumerable<ISession> GetAllForPeriod(DateTime after, DateTime before) =>
+            Context.QueryAsync<Session>(
+                    "Session",
+                    QueryOperator.Between,
+                    new[] {$"Session#{after:O}", $"Session#{before:O}"},
+                    new DynamoDBOperationConfig
+                    {
+                        IndexName = "Entity-Sk-Index"
+                    })
                 .GetNextSetAsync().Result;
 
         public IEnumerable<ISession> GetForCampaign(ulong serverId, string campaignId) =>
             Context.QueryAsync<Session>(
-                $"Campaign#{serverId}#{campaignId}",
-                QueryOperator.BeginsWith,
-                new[] {"Session#"})
+                    $"Campaign#{serverId}#{campaignId}",
+                    QueryOperator.BeginsWith,
+                    new[] {"Session#"})
                 .GetNextSetAsync().Result;
 
         public IEnumerable<ISession> GetForPlayer(string playerId)

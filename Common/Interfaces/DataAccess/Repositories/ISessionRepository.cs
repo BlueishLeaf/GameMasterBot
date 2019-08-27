@@ -8,6 +8,7 @@ namespace Common.Interfaces.DataAccess.Repositories
     public interface ISessionRepository
     {
         IEnumerable<ISession> GetAllAfterDate(DateTime date);
+        IEnumerable<ISession> GetAllForPeriod(DateTime after, DateTime before);
         IEnumerable<ISession> GetForCampaign(ulong serverId, string campaignId);
         IEnumerable<ISession> GetForPlayer(string playerId);
         Task Add(ISession session);
