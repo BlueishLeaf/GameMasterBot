@@ -15,7 +15,7 @@ namespace GameMasterBot.modules
 
         public HelpModule(CommandService service) => _service = service;
 
-        [Command("help"), Alias("?"), Summary("Displays a list of all the commands for GameMaster bot.")]
+        [Command("help"), Alias("?"), Name("help"), Summary("Displays a list of all the commands for this bot.")]
         public async Task<RuntimeResult> HelpAsync()
         {
             try
@@ -29,7 +29,7 @@ namespace GameMasterBot.modules
             }
         }
 
-        [Command("help"), Alias("?"), Summary("Displays information about the specified command.")]
+        [Command("help"), Alias("?"), Name("help"), Summary("Displays information about a specified command.")]
         public async Task<RuntimeResult> HelpAsync(
             [Summary("The command to be searched for.")]
             string command)
@@ -58,14 +58,14 @@ namespace GameMasterBot.modules
             }
         }
 
-        [Command("version"), Alias("v"), Summary("Displays information about the specified command.")]
+        [Command("version"), Alias("v"), Name("version"), Summary("Displays this bot's version number.")]
         public async Task<RuntimeResult> VersionAsync()
         {
             await ReplyAsync("GameMasterBot Alpha v0.1.1");
             return GameMasterResult.SuccessResult();
         }
 
-        [Command("roadmap"), Alias("repo", "repository", "issues"), Summary("Displays information about the specified command.")]
+        [Command("roadmap"), Alias("repo", "repository", "issues"), Name("roadmap"), Summary("Displays a link to the repository of this bot.")]
         public async Task<RuntimeResult> RoadmapAsync()
         {
             await ReplyAsync("You can check the roadmap and source code at https://github.com/BlueishLeaf/GameMasterBot");

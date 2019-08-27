@@ -153,150 +153,144 @@ namespace GameMasterBot.Modules
             }
         }
 
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("cancel next"), Name("cancel next"), Alias("next"), Summary("Cancels the next session for a campaign")]
+        public async Task<RuntimeResult> CancelNextAsync(
+            [Summary("The campaign that the session belongs to.")] string campaign = null)
+        {
+            #region Validation
+
+            #region Campaign
+
+            if (campaign == null)
+                campaign = Context.Channel.Name;
+
+            #endregion
+
+            #endregion
+
+            try
+            {
+                await _service.CancelNext(campaign);
+                await ReplyAsync("Session cancel successfully.");
+                return GameMasterResult.SuccessResult("Session cancelled successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Group("cancel")]
-        public class CancelModule : ModuleBase<SocketCommandContext>
+        [Command("cancel day"), Name("cancel day"), Alias("date"), Summary("Cancels all sessions on a given date for a campaign")]
+        public async Task<RuntimeResult> CancelDayAsync(
+            [Summary("The date on which the session will take place.")] string date,
+            [Summary("The campaign that the session belongs to.")] string campaign = null)
         {
-            private readonly SessionService _service;
+            #region Validation
 
-            public CancelModule(SessionService service) => _service = service;
+            #region Date
 
-            [Command, Name("cancel next"), Alias("next"), Summary("Cancels the next session for a campaign")]
-            public async Task<RuntimeResult> CancelNextAsync(
-                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            if (!DateTime.TryParse(date, out var parsedDate))
+                return GameMasterResult.ErrorResult("Invalid date.");
+
+            #endregion
+
+            #region Campaign
+
+            if (campaign == null)
+                campaign = Context.Channel.Name;
+
+            #endregion
+
+            #endregion
+
+            try
             {
-                #region Validation
-
-                #region Campaign
-
-                if (campaign == null)
-                    campaign = Context.Channel.Name;
-
-                #endregion
-
-                #endregion
-
-                try
-                {
-                    await _service.CancelNext(campaign);
-                    await ReplyAsync("Session cancel successfully.");
-                    return GameMasterResult.SuccessResult("Session cancelled successfully.");
-                }
-                catch (Exception e)
-                {
-                    return GameMasterResult.ErrorResult(e.Message);
-                }
+                await _service.CancelForDay(campaign, parsedDate.ToUniversalTime());
+                await ReplyAsync($"Sessions for {parsedDate} cancelled successfully.");
+                return GameMasterResult.SuccessResult("Sessions cancelled successfully.");
             }
-
-            [Command("day"), Name("cancel day"), Alias("date"), Summary("Cancels all sessions on a given date for a campaign")]
-            public async Task<RuntimeResult> CancelDayAsync(
-                [Summary("The date on which the session will take place.")] string date,
-                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            catch (Exception e)
             {
-                #region Validation
-
-                #region Date
-
-                if (!DateTime.TryParse(date, out var parsedDate))
-                    return GameMasterResult.ErrorResult("Invalid date.");
-
-                #endregion
-
-                #region Campaign
-
-                if (campaign == null)
-                    campaign = Context.Channel.Name;
-
-                #endregion
-
-                #endregion
-
-                try
-                {
-                    await _service.CancelForDay(campaign, parsedDate.ToUniversalTime());
-                    await ReplyAsync($"Sessions for {parsedDate} cancelled successfully.");
-                    return GameMasterResult.SuccessResult("Sessions cancelled successfully.");
-                }
-                catch (Exception e)
-                {
-                    return GameMasterResult.ErrorResult(e.Message);
-                }
+                return GameMasterResult.ErrorResult(e.Message);
             }
+        }
 
-            [Command, Name("cancel period"), Alias("range"), Summary("Cancels sessions on a range of dates for a campaign.")]
-            public async Task<RuntimeResult> CancelPeriodAsync(
-                [Summary("The start of the date range.")] string after,
-                [Summary("The end of the date range.")] string before,
-                [Summary("The campaign that the session belongs to.")] string campaign = null)
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("cancel period"), Name("cancel period"), Alias("range"), Summary("Cancels sessions on a range of dates for a campaign.")]
+        public async Task<RuntimeResult> CancelPeriodAsync(
+            [Summary("The start of the date range.")] string after,
+            [Summary("The end of the date range.")] string before,
+            [Summary("The campaign that the session belongs to.")] string campaign = null)
+        {
+            #region Validation
+
+            #region Date
+
+            if (!DateTime.TryParse(after, out var parsedAfterDate))
+                return GameMasterResult.ErrorResult("Invalid 'After' date.");
+
+            if (!DateTime.TryParse(before, out var parsedBeforeDate))
+                return GameMasterResult.ErrorResult("Invalid 'Before' date.");
+
+            #endregion
+
+            #region Campaign
+
+            if (campaign == null)
+                campaign = Context.Channel.Name;
+
+            #endregion
+
+            #endregion
+
+            try
             {
-                #region Validation
-
-                #region Date
-
-                if (!DateTime.TryParse(after, out var parsedAfterDate))
-                    return GameMasterResult.ErrorResult("Invalid 'After' date.");
-
-                if (!DateTime.TryParse(before, out var parsedBeforeDate))
-                    return GameMasterResult.ErrorResult("Invalid 'Before' date.");
-
-                #endregion
-
-                #region Campaign
-
-                if (campaign == null)
-                    campaign = Context.Channel.Name;
-
-                #endregion
-
-                #endregion
-
-                try
-                {
-                    await _service.CancelForPeriod(campaign, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
-                    await ReplyAsync("Session cancel successfully.");
-                    return GameMasterResult.SuccessResult("Session cancelled successfully.");
-                }
-                catch (Exception e)
-                {
-                    return GameMasterResult.ErrorResult(e.Message);
-                }
+                await _service.CancelForPeriod(campaign, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
+                await ReplyAsync("Session cancel successfully.");
+                return GameMasterResult.SuccessResult("Session cancelled successfully.");
             }
-
-            [Command, Name("cancel specific"), Alias("specific"), Summary("Cancels a specific session for a campaign")]
-            public async Task<RuntimeResult> CancelDayTimeAsync(
-                [Summary("The date on which the session will take place.")] string date,
-                [Summary("The time at which the session wil take place.")] string time,
-                [Summary("The campaign that the session belongs to.")] string campaign = null)
+            catch (Exception e)
             {
-                #region Validation
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
 
-                #region Date
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("cancel exact"), Name("cancel exact"), Alias("specific"), Summary("Cancels a specific session for a campaign")]
+        public async Task<RuntimeResult> CancelDayTimeAsync(
+            [Summary("The date on which the session will take place.")] string date,
+            [Summary("The time at which the session wil take place.")] string time,
+            [Summary("The campaign that the session belongs to.")] string campaign = null)
+        {
+            #region Validation
 
-                if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
-                    return GameMasterResult.ErrorResult("Invalid date.");
+            #region Date
 
-                #endregion
+            if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
+                return GameMasterResult.ErrorResult("Invalid date.");
 
-                #region Campaign
+            #endregion
 
-                if (campaign == null)
-                    campaign = Context.Channel.Name;
+            #region Campaign
 
-                #endregion
+            if (campaign == null)
+                campaign = Context.Channel.Name;
 
-                #endregion
+            #endregion
 
-                try
-                {
-                    await _service.CancelForDayTime(campaign, parsedDate.ToUniversalTime());
-                    await ReplyAsync("Session cancel successfully.");
-                    return GameMasterResult.SuccessResult("Session cancelled successfully.");
-                }
-                catch (Exception e)
-                {
-                    return GameMasterResult.ErrorResult(e.Message);
-                }
+            #endregion
+
+            try
+            {
+                await _service.CancelForDayTime(campaign, parsedDate.ToUniversalTime());
+                await ReplyAsync("Session cancel successfully.");
+                return GameMasterResult.SuccessResult("Session cancelled successfully.");
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
     }

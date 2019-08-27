@@ -69,8 +69,8 @@ namespace GameMasterBot.Utils
         private static List<EmbedFieldBuilder> BuildFieldsForCommands(IEnumerable<CommandMatch> matches) => 
             matches.Select(match => new EmbedFieldBuilder
             {
-                Name = match.Command.Module.Group != null ? $"**!{match.Command.Module.Group}** " + string.Join(", ", match.Command.Aliases) : "!" + string.Join(", !", match.Command.Aliases),
-                Value = $"***Summary:*** {match.Command.Summary}\n***Parameters:*** {(match.Command.Parameters.Any() ? string.Join(", ", match.Command.Parameters.Select(parameter => $"*{parameter.Name}*")) : "None")}", IsInline = false
+                Name = "`!" + string.Join("`, `!", match.Command.Aliases) + "`",
+                Value = $"*Summary:* {match.Command.Summary}\n*Parameters:* {(match.Command.Parameters.Any() ? string.Join(", ", match.Command.Parameters.Select(parameter => parameter.Name)) : "None")}", IsInline = false
             }).ToList();
 
         private static List<EmbedFieldBuilder> BuildFieldsForModules(IEnumerable<ModuleInfo> modules) =>
