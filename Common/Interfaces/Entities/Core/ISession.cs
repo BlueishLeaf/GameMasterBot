@@ -6,7 +6,9 @@ namespace Common.Interfaces.Entities.Core
     {
         ulong ChannelId { get; set; }
         ulong ServerId { get; set; }
+        string ServerName { get; set; }
         string CampaignId { get; set; }
+        string CampaignName { get; set; }
         string Schedule { get; set; }
         DateTime Date { get; set; }
         bool ReminderSent { get; set; }

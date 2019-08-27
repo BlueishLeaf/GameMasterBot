@@ -42,7 +42,21 @@ namespace DataAccess.Repositories
                     new[] {"Session#"})
                 .GetNextSetAsync().Result;
 
-        public IEnumerable<ISession> GetForPlayer(string playerId)
+        public IEnumerable<ISession> GetForCampaignAfterDate(ulong serverId, string campaignId, DateTime date) =>
+            Context.QueryAsync<Session>(
+                    $"Campaign#{serverId}#{campaignId}",
+                    QueryOperator.GreaterThanOrEqual,
+                    new[] { $"Session#{date:O}" })
+                .GetNextSetAsync().Result;
+
+        public IEnumerable<ISession> GetForCampaignForPeriod(ulong serverId, string campaignId, DateTime after, DateTime before) =>
+            Context.QueryAsync<Session>(
+                    $"Campaign#{serverId}#{campaignId}",
+                    QueryOperator.Between,
+                    new[] { $"Session#{after:O}", $"Session#{before:O}" })
+                .GetNextSetAsync().Result;
+
+        public IEnumerable<ISession> GetForPlayerAfterDate(string playerId)
         {
             throw new NotImplementedException();
         }

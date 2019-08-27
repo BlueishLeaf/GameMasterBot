@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,7 +49,9 @@ namespace GameMasterBot.Services
                 await _unitOfWork.Sessions.Add(new Session
                 {
                     CampaignId = session.CampaignId,
+                    CampaignName = session.CampaignName,
                     ServerId = session.ServerId,
+                    ServerName = session.ServerName,
                     ChannelId = session.ChannelId,
                     Schedule = session.Schedule,
                     Date = session.Date,
@@ -97,12 +100,14 @@ namespace GameMasterBot.Services
             }
         }
 
-        public async Task<ISession> Create(ulong channelId, ulong serverId, string campaignId,  string schedule, DateTime date)
+        public async Task<ISession> Create(ulong channelId, ulong serverId, string serverName, string campaignId, string campaignName, string schedule, DateTime date)
         {
             var session = new Session
             {
                 CampaignId = campaignId,
+                CampaignName = campaignName,
                 ServerId = serverId,
+                ServerName = serverName,
                 ChannelId = channelId,
                 Schedule = schedule,
                 Date = date,
@@ -114,9 +119,9 @@ namespace GameMasterBot.Services
             return session;
         }
 
-        public async Task CancelNext(string campaignId)
+        public async Task CancelNext(ulong serverId, string campaignId)
         {
-            var nextSession = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow).FirstOrDefault(session => session.CampaignId == campaignId);
+            var nextSession = _unitOfWork.Sessions.GetForCampaignAfterDate(serverId, campaignId, DateTime.UtcNow).FirstOrDefault();
             if (nextSession == null)
                 throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
             await _unitOfWork.Sessions.Remove(nextSession);
@@ -124,9 +129,9 @@ namespace GameMasterBot.Services
             SetTimerDelay();
         }
 
-        public async Task CancelForDay(string campaignId, DateTime date)
+        public async Task CancelForDay(ulong serverId, string campaignId, DateTime date)
         {
-            var sessions = _unitOfWork.Sessions.GetAllAfterDate(date).Where(session => session.CampaignId == campaignId).ToList();
+            var sessions = _unitOfWork.Sessions.GetForCampaignAfterDate(serverId, campaignId, date).ToList();
             if (!sessions.Any())
                 throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
             await _unitOfWork.Sessions.RemoveRange(sessions);
@@ -134,9 +139,9 @@ namespace GameMasterBot.Services
             SetTimerDelay();
         }
 
-        public async Task CancelForPeriod(string campaignId, DateTime after, DateTime before)
+        public async Task CancelForPeriod(ulong serverId, string campaignId, DateTime after, DateTime before)
         {
-            var sessions = _unitOfWork.Sessions.GetAllForPeriod(after, before).Where(session => session.CampaignId == campaignId).ToList();
+            var sessions = _unitOfWork.Sessions.GetForCampaignForPeriod(serverId, campaignId, after, before).ToList();
             if (!sessions.Any())
                 throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
             await _unitOfWork.Sessions.RemoveRange(sessions);
@@ -144,9 +149,9 @@ namespace GameMasterBot.Services
             SetTimerDelay();
         }
 
-        public async Task CancelForDayTime(string campaignId, DateTime date)
+        public async Task CancelForDayTime(ulong serverId, string campaignId, DateTime date)
         {
-            var sessionSpecified = _unitOfWork.Sessions.GetAllAfterDate(date).FirstOrDefault(session => session.CampaignId == campaignId);
+            var sessionSpecified = _unitOfWork.Sessions.GetForCampaign(serverId, campaignId).FirstOrDefault(session => session.Date == date);
             if (sessionSpecified == null)
                 throw new Exception("No sessions found for this campaign. Make sure you are either in a campaign channel or have specified the campaign.");
             await _unitOfWork.Sessions.Remove(sessionSpecified);
@@ -154,7 +159,7 @@ namespace GameMasterBot.Services
             SetTimerDelay();
         }
 
-        public async Task Deschedule(string campaignId, DateTime date)
+        public async Task CancelSchedule(string campaignId, DateTime date)
         {
             var sessionSpecified = _unitOfWork.Sessions.GetAllAfterDate(date).FirstOrDefault(session => session.CampaignId == campaignId);
             if (sessionSpecified == null)
@@ -163,6 +168,6 @@ namespace GameMasterBot.Services
             SetTimerDelay();
         }
 
-        public ISession GetNext(string campaignId) => _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow).FirstOrDefault(session => session.CampaignId == campaignId);
+        public IEnumerable<ISession> GetUpcoming(ulong serverId, string campaignId) => _unitOfWork.Sessions.GetForCampaignAfterDate(serverId, campaignId, DateTime.UtcNow);
     }
 }

@@ -7,7 +7,9 @@ namespace Entities.Core
     {
         public ulong ChannelId { get; set; }
         public ulong ServerId { get; set; }
+        public string ServerName { get; set; }
         public string CampaignId { get; set; }
+        public string CampaignName { get; set; }
         public string Schedule { get; set; }
         public DateTime Date { get; set; }
         public bool ReminderSent { get; set; }

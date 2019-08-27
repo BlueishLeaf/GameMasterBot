@@ -9,11 +9,11 @@ namespace GameMasterBot.Utils
     public class EmbedUtils
     {
         private const string IconUrl = "https://cdn.discordapp.com/avatars/597026097166680065/5fd03a7d9efa4f8cca8395e5555f4879.png?size=32";
-        public static Embed CampaignEmbed(ICampaign campaign) =>
+        public static Embed CampaignInfo(ICampaign campaign) =>
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
-                Description = "For a list of all campaigns on this server, use the `!campaign server` or `!campaign *` matches.",
+                Description = "For a list of all campaigns on this server, use the `!campaign server` or `!campaign *` commands.",
                 Color = Color.Purple,
                 Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.CreatedBy}"),
                 Fields = new List<EmbedFieldBuilder>
@@ -39,25 +39,93 @@ namespace GameMasterBot.Utils
                 }
             }.Build();
 
-        public static Embed CampaignsEmbed(IEnumerable<ICampaign> campaigns) =>
+        public static Embed CampaignList(string title, IEnumerable<ICampaign> campaigns) =>
             new EmbedBuilder
             {
-                Author = new EmbedAuthorBuilder().WithName("All Campaigns on this Server").WithIconUrl(IconUrl),
+                Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
                 Description = "For more info on a specific campaign, use the `!campaign info 'campaign'` command.",
                 Color = Color.Blue,
                 Fields = BuildFieldsForCampaigns(campaigns)
             }.Build();
 
-        public static Embed CommandsEmbed(IEnumerable<CommandMatch> commands) =>
+        public static Embed SessionInfo(string title, ISession session) =>
+            new EmbedBuilder
+            {
+                Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
+                Description = "*Note: All session times are given in Universal Time(UTC)*",
+                Color = Color.Gold,
+                Fields = new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Date",
+                        Value = session.Date.ToShortDateString(),
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Time",
+                        Value = session.Date.ToShortTimeString(),
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Schedule",
+                        Value = session.Schedule,
+                        IsInline = true
+                    }
+                }
+            }.Build();
+
+        public static Embed SessionList(string title, IEnumerable<ISession> sessions)
+        {
+            sessions = sessions.ToList();
+            string dates = null, times = null, schedules = null;
+            foreach (var session in sessions)
+            {
+                dates += session.Date.ToShortDateString() + "\n";
+                times += session.Date.ToShortTimeString() + "\n";
+                schedules += session.Schedule + "\n";
+            }
+            return new EmbedBuilder
+            {
+                Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
+                Description = "*Note: All session times are given in Universal Time(UTC)*",
+                Color = Color.Gold,
+                Fields = new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Date",
+                        Value = dates,
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Time",
+                        Value = times,
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Schedule",
+                        Value = schedules,
+                        IsInline = true
+                    }
+                }
+            }.Build();
+        }
+
+        public static Embed CommandList(IEnumerable<CommandMatch> commands) =>
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("Commands Matching your Search").WithIconUrl(IconUrl),
-                Description = "For a list of all matches, use the `!help` command.",
+                Description = "For a list of all commands, use the `!help` command.",
                 Color = Color.Orange,
                 Fields =  BuildFieldsForCommands(commands)
             }.Build();
 
-        public static Embed ModulesEmbed(IEnumerable<ModuleInfo> modules) =>
+        public static Embed ModuleList(IEnumerable<ModuleInfo> modules) =>
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("All Commands").WithIconUrl(IconUrl),

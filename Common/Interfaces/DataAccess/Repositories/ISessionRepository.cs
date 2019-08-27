@@ -10,7 +10,9 @@ namespace Common.Interfaces.DataAccess.Repositories
         IEnumerable<ISession> GetAllAfterDate(DateTime date);
         IEnumerable<ISession> GetAllForPeriod(DateTime after, DateTime before);
         IEnumerable<ISession> GetForCampaign(ulong serverId, string campaignId);
-        IEnumerable<ISession> GetForPlayer(string playerId);
+        IEnumerable<ISession> GetForCampaignAfterDate(ulong serverId, string campaignId, DateTime date);
+        IEnumerable<ISession> GetForCampaignForPeriod(ulong serverId, string campaignId, DateTime after, DateTime before);
+        IEnumerable<ISession> GetForPlayerAfterDate(string playerId);
         Task Add(ISession session);
         Task Update(ISession session);
         Task Remove(ISession session);

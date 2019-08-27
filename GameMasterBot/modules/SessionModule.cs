@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -9,7 +10,7 @@ using GameMasterBot.Utils;
 namespace GameMasterBot.Modules
 {
     [RequireContext(ContextType.Guild)]
-    [Group("session"), Name("Session"), Summary("Commands relating to managing sessions.")]
+    [Group("session"), Name("Session")]
     public class SessionModule: ModuleBase<SocketCommandContext>
     {
         private readonly SessionService _service;
@@ -17,12 +18,39 @@ namespace GameMasterBot.Modules
         public SessionModule(SessionService service) => _service = service;
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("add"), Name("add"), Alias("+"), Summary("Creates a new session for this campaign.")]
+        [Command("add"), Alias("+")]
+        [Summary("Creates a new session for this campaign.")]
         public async Task<RuntimeResult> AddAsync(
             [Summary("The date on which the session will take place.")] string date,
-            [Summary("The time at which the session will take place.")] string time)
+            [Summary("The time at which the session will take place.")] string time,
+            [Summary("The schedule type for the session.")] string campaign = null)
         {
             #region Validation
+
+            #region Campaign
+
+            string campaignId;
+            ulong channelId;
+            if (campaign == null)
+            {
+                campaignId = Context.Channel.Name;
+                campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaignId.Replace('-', ' '));
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+                channelId = campaignTextChannel.Id;
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaign.Replace('-', ' ').ToLower());
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+                channelId = campaignTextChannel.Id;
+            }
+
+            #endregion
 
             #region Date/Time
 
@@ -35,9 +63,9 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _service.Create(Context.Channel.Id, Context.Guild.Id, Context.Channel.Name, "AdHoc", parsedDate.ToUniversalTime()).Result;
-                await ReplyAsync($"AdHoc session added for {session.Date.ToUniversalTime()} UTC.");
-                return GameMasterResult.SuccessResult($"Session({date}-{time}) added successfully.");
+                var session = _service.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign, "AdHoc", parsedDate.ToUniversalTime()).Result;
+                await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Added for {session.CampaignName}", session));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -46,13 +74,40 @@ namespace GameMasterBot.Modules
         }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("schedule"), Name("schedule"), Alias("++"), Summary("Schedules a new session for this session")]
-        public async Task<RuntimeResult> AddAsync(
+        [Command("schedule"), Alias("++")]
+        [Summary("Schedules a new session for a campaign")]
+        public async Task<RuntimeResult> ScheduleAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time,
-            [Summary("The schedule type for the session.")] string schedule)
+            [Summary("The schedule type for the session.")] string schedule,
+            [Summary("The schedule type for the session.")] string campaign = null)
         {
             #region Validation
+
+            #region Campaign
+
+            string campaignId;
+            ulong channelId;
+            if (campaign == null)
+            {
+                campaignId = Context.Channel.Name;
+                campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaignId.Replace('-', ' '));
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+                channelId = campaignTextChannel.Id;
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaign.Replace('-', ' ').ToLower());
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+                channelId = campaignTextChannel.Id;
+            }
+
+            #endregion
 
             #region Date/Time
 
@@ -89,9 +144,9 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _service.Create(Context.Channel.Id, Context.Guild.Id, Context.Channel.Name, schedule, parsedDate.ToUniversalTime()).Result;
-                await ReplyAsync($"{schedule} session scheduled, starting on {session.Date.ToUniversalTime()} UTC.");
-                return GameMasterResult.SuccessResult($"Session({session.Date}-{schedule}) scheduled successfully.");
+                var session = _service.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign , schedule, parsedDate.ToUniversalTime()).Result;
+                await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Scheduled for {session.CampaignName}", session));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -99,35 +154,43 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("deschedule"), Name("deschedule"), Alias("--"), Summary("Deschedules a recurring session for this campaign")]
-        public async Task<RuntimeResult> DescheduleAsync(
-            [Summary("The date on which the session will take place.")] string date,
-            [Summary("The time at which the session will take place.")] string time,
-            [Summary("The campaign that the session belongs to.")] string campaign = null)
+        [Command("next"), Alias("closest")]
+        [Summary("Get the next session for this campaign.")]
+        public async Task<RuntimeResult> NextAsync(
+            [Summary("The name of the campaign.")] string campaign = null)
         {
             #region Validation
 
-            #region Date
-
-            if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
-                return GameMasterResult.ErrorResult("Invalid date.");
-
-            #endregion
-
             #region Campaign
 
+            string campaignId;
             if (campaign == null)
-                campaign = Context.Channel.Name;
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
 
             #endregion
 
             #endregion
+
             try
             {
-                await _service.Deschedule(campaign, parsedDate);
-                await ReplyAsync("Session de-scheduled successfully.");
-                return GameMasterResult.SuccessResult("Session de-scheduled cancelled successfully.");
+                var session = _service.GetUpcoming(Context.Guild.Id, campaignId).FirstOrDefault();
+                if (session == null)
+                    return GameMasterResult.ErrorResult("This campaign does not exist or the next session for this campaign has not been scheduled yet.");
+
+                await ReplyAsync(embed: EmbedUtils.SessionInfo($"Next Session for {session.CampaignName}", session));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -135,17 +198,45 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [Command("next"), Name("next"), Summary("Get the next session for this campaign")]
-        public async Task<RuntimeResult> NextAsync()
+        [Command("upcoming"), Alias("soon")]
+        [Summary("Get all the upcoming sessions for this campaign.")]
+        public async Task<RuntimeResult> UpcomingAsync(
+            [Summary("The name of the campaign.")] string campaign = null)
         {
+            #region Validation
+
+            #region Campaign
+
+            string campaignId;
+            if (campaign == null)
+            {
+                campaignId = Context.Channel.Name;
+                campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaignId.Replace('-', ' '));
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaign.Replace('-', ' ').ToLower());
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+
+            #endregion
+
+            #endregion
+
             try
             {
-                var session = _service.GetNext(Context.Channel.Name);
-                if (session == null)
-                    await ReplyAsync("The next session for this campaign has not been scheduled yet.");
-                else
-                    await ReplyAsync($"The next session for this campaign will be on {session.Date.ToUniversalTime()} UTC.");
-                return GameMasterResult.SuccessResult("Next session found successfully.");
+                var sessions = _service.GetUpcoming(Context.Guild.Id, campaignId).ToList();
+                if (!sessions.Any())
+                    return GameMasterResult.ErrorResult("This campaign does not exist or the next session for this campaign has not been scheduled yet.");
+
+                await ReplyAsync(embed: EmbedUtils.SessionList($"Upcoming Sessions for {campaign}", sessions));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -154,7 +245,8 @@ namespace GameMasterBot.Modules
         }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("cancel next"), Name("cancel next"), Alias("next"), Summary("Cancels the next session for a campaign")]
+        [Command("cancel next"), Alias("cancel upcoming")]
+        [Summary("Cancels the next session for a campaign")]
         public async Task<RuntimeResult> CancelNextAsync(
             [Summary("The campaign that the session belongs to.")] string campaign = null)
         {
@@ -162,8 +254,21 @@ namespace GameMasterBot.Modules
 
             #region Campaign
 
+            string campaignId;
             if (campaign == null)
-                campaign = Context.Channel.Name;
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
 
             #endregion
 
@@ -171,9 +276,9 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelNext(campaign);
-                await ReplyAsync("Session cancel successfully.");
-                return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                await _service.CancelNext(Context.Guild.Id, campaignId);
+                await ReplyAsync("Next session cancelled successfully.");
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -182,7 +287,8 @@ namespace GameMasterBot.Modules
         }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("cancel day"), Name("cancel day"), Alias("date"), Summary("Cancels all sessions on a given date for a campaign")]
+        [Command("cancel day"), Alias("cancel date")]
+        [Summary("Cancels all sessions on a given date for a campaign")]
         public async Task<RuntimeResult> CancelDayAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The campaign that the session belongs to.")] string campaign = null)
@@ -198,8 +304,21 @@ namespace GameMasterBot.Modules
 
             #region Campaign
 
+            string campaignId;
             if (campaign == null)
-                campaign = Context.Channel.Name;
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
 
             #endregion
 
@@ -207,9 +326,9 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelForDay(campaign, parsedDate.ToUniversalTime());
-                await ReplyAsync($"Sessions for {parsedDate} cancelled successfully.");
-                return GameMasterResult.SuccessResult("Sessions cancelled successfully.");
+                await _service.CancelForDay(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
+                await ReplyAsync($"All sessions on {parsedDate.ToShortDateString()} cancelled successfully.");
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -218,7 +337,8 @@ namespace GameMasterBot.Modules
         }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("cancel period"), Name("cancel period"), Alias("range"), Summary("Cancels sessions on a range of dates for a campaign.")]
+        [Command("cancel period"), Alias("cancel range")]
+        [Summary("Cancels sessions on a range of dates for a campaign.")]
         public async Task<RuntimeResult> CancelPeriodAsync(
             [Summary("The start of the date range.")] string after,
             [Summary("The end of the date range.")] string before,
@@ -238,8 +358,21 @@ namespace GameMasterBot.Modules
 
             #region Campaign
 
+            string campaignId;
             if (campaign == null)
-                campaign = Context.Channel.Name;
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
 
             #endregion
 
@@ -247,9 +380,9 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelForPeriod(campaign, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
-                await ReplyAsync("Session cancel successfully.");
-                return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                await _service.CancelForPeriod(Context.Guild.Id, campaignId, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
+                await ReplyAsync($"All sessions from {parsedAfterDate.ToShortDateString()} to {parsedBeforeDate.ToShortDateString()} cancelled successfully.");
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
@@ -258,7 +391,8 @@ namespace GameMasterBot.Modules
         }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("cancel exact"), Name("cancel exact"), Alias("specific"), Summary("Cancels a specific session for a campaign")]
+        [Command("cancel exact"), Alias("cancel specific")]
+        [Summary("Cancels a specific session for a campaign")]
         public async Task<RuntimeResult> CancelDayTimeAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session wil take place.")] string time,
@@ -275,8 +409,21 @@ namespace GameMasterBot.Modules
 
             #region Campaign
 
+            string campaignId;
             if (campaign == null)
-                campaign = Context.Channel.Name;
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
 
             #endregion
 
@@ -284,9 +431,60 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelForDayTime(campaign, parsedDate.ToUniversalTime());
-                await ReplyAsync("Session cancel successfully.");
-                return GameMasterResult.SuccessResult("Session cancelled successfully.");
+                await _service.CancelForDayTime(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
+                await ReplyAsync($"Session on {parsedDate.ToShortDateString()} at {parsedDate.ToShortTimeString()} cancelled successfully.");
+                return GameMasterResult.SuccessResult();
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
+
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Command("cancel schedule"), Alias("cancel recurring")]
+        [Summary("Removes a recurring session for this campaign")]
+        public async Task<RuntimeResult> CancelScheduleAsync(
+            [Summary("The date on which the session will take place.")] string date,
+            [Summary("The time at which the session will take place.")] string time,
+            [Summary("The campaign that the session belongs to.")] string campaign = null)
+        {
+            #region Validation
+
+            #region Date
+
+            if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
+                return GameMasterResult.ErrorResult("Invalid date.");
+
+            #endregion
+
+            #region Campaign
+
+            string campaignId;
+            if (campaign == null)
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+
+            #endregion
+
+            #endregion
+
+            try
+            {
+                await _service.CancelSchedule(campaignId, parsedDate);
+                await ReplyAsync($"Session schedule on {parsedDate.ToShortDateString()} at {parsedDate.ToShortTimeString()} cancelled successfully.");
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {

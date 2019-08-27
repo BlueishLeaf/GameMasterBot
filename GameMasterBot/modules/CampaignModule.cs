@@ -11,14 +11,15 @@ using GameMasterBot.Utils;
 namespace GameMasterBot.Modules
 {
     [RequireContext(ContextType.Guild)]
-    [Group("campaign"), Name("Campaign"), Summary("Commands relating to managing campaigns.")]
+    [Group("campaign"), Name("Campaign")]
     public class CampaignModule : ModuleBase<SocketCommandContext>
     {
         private readonly CampaignService _service;
 
         public CampaignModule(CampaignService service) => _service = service;
 
-        [Command("add", RunMode = RunMode.Async), Name("add"), Alias("+"), Summary("Creates a new campaign on this server.")]
+        [Command("add", RunMode = RunMode.Async), Alias("create", "+")]
+        [Summary("Creates a new campaign on this server.")]
         public async Task<RuntimeResult> AddAsync(
             [Summary("The campaign's name.")] string name,
             [Summary("The campaign's system.")] string system,
@@ -158,17 +159,18 @@ namespace GameMasterBot.Modules
                 #endregion
 
                 // Send a rich text embed representing the new campaign
-                await ReplyAsync("Campaign created successfully!", false, EmbedUtils.CampaignEmbed(campaign));
-                return GameMasterResult.SuccessResult($"Campaign({campaign.Name}) created successfully.");
+                await ReplyAsync(embed: EmbedUtils.CampaignInfo(campaign));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
 
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        [Command("remove", RunMode = RunMode.Async), Name("remove"), Alias("-"), Summary("Removes a campaign from this server.")]
+        [Command("remove", RunMode = RunMode.Async), Alias("delete", "-")]
+        [Summary("Removes a campaign from this server.")]
         public async Task<RuntimeResult> RemoveAsync(
             [Summary("The Campaign's name.")] string name)
         {
@@ -206,40 +208,25 @@ namespace GameMasterBot.Modules
             {
                 _service.Remove(Context.Guild.Id.ToString(), campaignId);
                 await ReplyAsync("Campaign removed successfully!");
-                return GameMasterResult.SuccessResult($"Campaign({name}) removed successfully.");
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
 
-        [Command("info"), Name("info"), Summary("Returns information about the campaign belonging to this channel.")]
-        public async Task<RuntimeResult> GetAsync()
-        {
-            try
-            {
-                var campaign = await _service.Get(Context.Guild.Id.ToString(), Context.Channel.Name);
-                await ReplyAsync("Campaign found successfully!", false, EmbedUtils.CampaignEmbed(campaign));
-                return GameMasterResult.SuccessResult($"Campaign({campaign.Name}) found successfully.");
-            }
-            catch (Exception e)
-            {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
-            }
-        }
-
-        [Command("info"), Name("info"), Summary("Returns information about the campaign specified.")]
+        [Command("info"), Alias("details")]
+        [Summary("Returns information about the campaign specified.")]
         public async Task<RuntimeResult> GetAsync(
-            [Summary("The Campaign's name.")] string name)
+            [Summary("The Campaign's name.")] string name = null)
         {
             #region Validation
 
             #region Name
 
-            // Max channel name length in Discord is 100 characters, check against 90 to be safe
-            if (name.Length > 90)
-                return GameMasterResult.ErrorResult("The campaign's name must be less than 100 characters long.");
+            if (name == null)
+                name = Context.Channel.Name;
 
             #endregion
 
@@ -248,31 +235,33 @@ namespace GameMasterBot.Modules
             try
             {
                 var campaign = await _service.Get(Context.Guild.Id.ToString(), name.ToLower().Replace(' ', '-'));
-                await ReplyAsync("Campaign found successfully!", false, EmbedUtils.CampaignEmbed(campaign));
-                return GameMasterResult.SuccessResult($"Campaign({name}) found successfully.");
+                await ReplyAsync(embed: EmbedUtils.CampaignInfo(campaign));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
 
-        [Command("server"), Name("server"), Alias("*"), Summary("Returns information about all campaigns on this server.")]
+        [Command("server"), Alias("guild", "*")]
+        [Summary("Returns information about all campaigns on this server.")]
         public async Task<RuntimeResult> GetAllAsync()
         {
             try
             {
                 var campaigns = _service.GetForServer(Context.Guild.Id.ToString());
-                await ReplyAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
-                return GameMasterResult.SuccessResult($"Campaigns found successfully.");
+                await ReplyAsync(embed: EmbedUtils.CampaignList($"All Active Campaigns for {Context.Guild.Name}", campaigns));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
 
-        [Command("self"), Name("self"), Alias("me"), Summary("Returns information about all campaigns for this player.")]
+        [Command("self"), Alias("me")]
+        [Summary("Returns information about all campaigns for this player.")]
         public async Task<RuntimeResult> GetForPlayerAsync()
         {
             var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, Context.User.Username, StringComparison.CurrentCultureIgnoreCase));
@@ -281,12 +270,12 @@ namespace GameMasterBot.Modules
             try
             {
                 var campaigns = _service.GetForPlayer(Context.Guild.Id.ToString(), guildUser.Id.ToString());
-                await guildUser.SendMessageAsync("Campaigns found successfully! For more information about a campaign, type '!campaign info [Campaign]'", false, EmbedUtils.CampaignsEmbed(campaigns));
-                return GameMasterResult.SuccessResult($"Campaigns found successfully.");
+                await guildUser.SendMessageAsync(embed: EmbedUtils.CampaignList($"All Active Campaigns for {Context.User.Username}", campaigns));
+                return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
             {
-                return GameMasterResult.ErrorResult($"Command failed, Error: {e.Message}");
+                return GameMasterResult.ErrorResult(e.Message);
             }
         }
     }
