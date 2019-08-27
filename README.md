@@ -4,6 +4,7 @@ GameMasterBot is a discord bot for managing TRPG campaigns. With it, you can eas
 
 ## Roadmap
 - Support for more fine-grain control over scheduling and cancelling sessions.
+- A more descriptive and helpful 'help' command.
 - Support for music playback and the ability to create playlists for campaigns.
 - More detailed views regarding schedules and players.
 - A more streamlined approach to creating campaigns.
