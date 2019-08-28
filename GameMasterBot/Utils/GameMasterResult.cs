@@ -4,7 +4,7 @@ namespace GameMasterBot.Utils
 {
     public class GameMasterResult: RuntimeResult
     {
-        public GameMasterResult(CommandError? error, string reason) : base(error, reason) { }
+        private GameMasterResult(CommandError? error, string reason) : base(error, reason) { }
 
         public static GameMasterResult ErrorResult(string reason) => new GameMasterResult(CommandError.Unsuccessful, reason);
 

@@ -6,7 +6,7 @@ using Discord.Commands;
 
 namespace GameMasterBot.Utils
 {
-    public class EmbedUtils
+    public static class EmbedUtils
     {
         private const string IconUrl = "https://cdn.discordapp.com/avatars/597026097166680065/5fd03a7d9efa4f8cca8395e5555f4879.png?size=32";
         public static Embed CampaignInfo(ICampaign campaign) =>
@@ -27,7 +27,7 @@ namespace GameMasterBot.Utils
                     new EmbedFieldBuilder
                     {
                         Name = "Game Master",
-                        Value = campaign.GameMaster,
+                        Value = campaign.GameMasterName,
                         IsInline = true
                     },
                     new EmbedFieldBuilder
@@ -165,7 +165,7 @@ namespace GameMasterBot.Utils
                 builders.Add(new EmbedFieldBuilder
                 {
                     Name = "Game Master",
-                    Value = campaign.GameMaster,
+                    Value = campaign.GameMasterName,
                     IsInline = true
                 });
             }

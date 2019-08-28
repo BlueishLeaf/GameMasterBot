@@ -18,6 +18,7 @@ namespace GameMasterBot.Modules
 
         public CampaignModule(CampaignService service) => _service = service;
 
+        [RequireRole("Game Master")]
         [Command("add", RunMode = RunMode.Async), Alias("create", "+")]
         [Summary("Creates a new campaign on this server.")]
         public async Task<RuntimeResult> AddAsync(
@@ -81,7 +82,7 @@ namespace GameMasterBot.Modules
             try
             {
                 // Send input to service to create the campaign in the database
-                var campaign = _service.Create(name, system, gameMaster, url, players, Context.User.ToString(), Context.Guild.Name, Context.Guild.Id);
+                var campaign = _service.Create(name, system, gameMaster, Context.User.Id, url, players, Context.User.ToString(), Context.Guild.Name, Context.Guild.Id);
 
                 #region Guild Administration
 
@@ -168,7 +169,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("remove", RunMode = RunMode.Async), Alias("delete", "-")]
         [Summary("Removes a campaign from this server.")]
         public async Task<RuntimeResult> RemoveAsync(
@@ -189,6 +190,11 @@ namespace GameMasterBot.Modules
             #region Guild Administration
 
             var campaignId = name.ToLower().Replace(' ', '-');
+            // Check to make sure that this user is the game master of the campaign
+            var campaign = await _service.Get(Context.Guild.Id.ToString(), campaignId);
+            if (campaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to remove this campaign.");
+            
             var textChannel = Context.Guild.TextChannels.FirstOrDefault(channel => channel.Name == campaignId);
             if (textChannel != null) await Context.Guild.GetTextChannel(textChannel.Id).DeleteAsync();
 

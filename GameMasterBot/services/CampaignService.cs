@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces.DataAccess;
 using Common.Interfaces.Entities.Core;
@@ -12,7 +13,7 @@ namespace GameMasterBot.Services
 
         public CampaignService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-        public ICampaign Create(string name, string system, string gameMaster, string url, string[] players, string createdBy, string guildName, ulong guildId)
+        public ICampaign Create(string name, string system, string gameMaster, ulong gameMasterId, string url, IEnumerable<string> players, string createdBy, string guildName, ulong guildId)
         {
             // Build the campaign object from the params
             var campaign = new Campaign
@@ -20,12 +21,13 @@ namespace GameMasterBot.Services
                 Id = name.ToLower().Replace(' ', '-'),
                 Name = name,
                 System = system,
-                GameMaster = gameMaster,
+                GameMasterName = gameMaster,
+                GameMasterId = gameMasterId,
                 Url = url,
                 CreatedBy = createdBy,
-                Players = new List<string>(players),
+                Players = players.ToList(),
                 ServerName = guildName,
-                ServerId = guildId.ToString()
+                ServerId = guildId
             };
             _unitOfWork.Campaigns.Add(campaign);
             return campaign;

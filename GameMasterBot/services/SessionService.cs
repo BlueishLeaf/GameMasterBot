@@ -128,6 +128,8 @@ namespace GameMasterBot.Services
             await CreateNextIfNecessary(nextSession);
             SetTimerDelay();
         }
+        
+        public async Task<ICampaign> GetCampaign(string serverId, string campaignId) => await _unitOfWork.Campaigns.Get(serverId, campaignId);
 
         public async Task CancelForDay(ulong serverId, string campaignId, DateTime date)
         {

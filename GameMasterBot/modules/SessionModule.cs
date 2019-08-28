@@ -17,7 +17,7 @@ namespace GameMasterBot.Modules
 
         public SessionModule(SessionService service) => _service = service;
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("add"), Alias("+")]
         [Summary("Creates a new session for this campaign.")]
         public async Task<RuntimeResult> AddAsync(
@@ -49,6 +49,11 @@ namespace GameMasterBot.Modules
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
                 channelId = campaignTextChannel.Id;
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to add a session for this campaign.");
 
             #endregion
 
@@ -73,7 +78,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("schedule"), Alias("++")]
         [Summary("Schedules a new session for a campaign")]
         public async Task<RuntimeResult> ScheduleAsync(
@@ -86,6 +91,7 @@ namespace GameMasterBot.Modules
 
             #region Campaign
 
+            // TODO: Clean this up and reduce duplication
             string campaignId;
             ulong channelId;
             if (campaign == null)
@@ -106,8 +112,15 @@ namespace GameMasterBot.Modules
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
                 channelId = campaignTextChannel.Id;
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to schedule a session for this campaign.");
 
             #endregion
+            
+
 
             #region Date/Time
 
@@ -244,7 +257,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("cancel next"), Alias("cancel upcoming")]
         [Summary("Cancels the next session for a campaign")]
         public async Task<RuntimeResult> CancelNextAsync(
@@ -269,6 +282,11 @@ namespace GameMasterBot.Modules
                 if (campaignTextChannel == null)
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
 
@@ -286,7 +304,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("cancel day"), Alias("cancel date")]
         [Summary("Cancels all sessions on a given date for a campaign")]
         public async Task<RuntimeResult> CancelDayAsync(
@@ -319,6 +337,11 @@ namespace GameMasterBot.Modules
                 if (campaignTextChannel == null)
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
 
@@ -336,7 +359,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("cancel period"), Alias("cancel range")]
         [Summary("Cancels sessions on a range of dates for a campaign.")]
         public async Task<RuntimeResult> CancelPeriodAsync(
@@ -373,6 +396,11 @@ namespace GameMasterBot.Modules
                 if (campaignTextChannel == null)
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
 
@@ -390,7 +418,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("cancel exact"), Alias("cancel specific")]
         [Summary("Cancels a specific session for a campaign")]
         public async Task<RuntimeResult> CancelDayTimeAsync(
@@ -424,6 +452,11 @@ namespace GameMasterBot.Modules
                 if (campaignTextChannel == null)
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
 
@@ -441,7 +474,7 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [RequireRole("Game Master")]
         [Command("cancel schedule"), Alias("cancel recurring")]
         [Summary("Removes a recurring session for this campaign")]
         public async Task<RuntimeResult> CancelScheduleAsync(
@@ -475,6 +508,11 @@ namespace GameMasterBot.Modules
                 if (campaignTextChannel == null)
                     return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
             }
+            
+            // Check to make sure that this user is the game master of the campaign
+            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            if (targetCampaign.GameMasterId != Context.User.Id)
+                return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
 

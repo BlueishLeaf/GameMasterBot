@@ -29,7 +29,7 @@ namespace GameMasterBot
 
         public async Task InitializeAsync() => await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-        public async Task HandleCommandAsync(SocketMessage messageParam)
+        private async Task HandleCommandAsync(SocketMessage messageParam)
         {
             // Do not process command if it was a system message
             if (!(messageParam is SocketUserMessage message)) return;
@@ -48,7 +48,8 @@ namespace GameMasterBot
             // Execute the command
             await _commands.ExecuteAsync(context, argPos, _services);
         }
-        public async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
+
+        private static async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
             // The command is unspecified when there was a search failure (command not found); we don't care about these errors
             if (!command.IsSpecified) return;

@@ -10,7 +10,9 @@ namespace DataAccess
     {
         public GameMasterContext(): base(
             new AmazonDynamoDBClient(
-                new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"), Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS")),
+                new BasicAWSCredentials(
+                    Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"),
+                    Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS")), 
                 RegionEndpoint.EUWest1)) { }
     }
 }

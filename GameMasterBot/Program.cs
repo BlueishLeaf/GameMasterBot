@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GameMasterBot
 {
-    internal class Program
+    internal static class Program
     {
         private static void Main() => MainAsync().GetAwaiter().GetResult();
 

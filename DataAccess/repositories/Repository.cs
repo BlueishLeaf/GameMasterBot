@@ -4,8 +4,8 @@ namespace DataAccess.Repositories
 {
     public class Repository
     {
-        protected DynamoDBContext Context;
+        protected readonly DynamoDBContext Context;
 
-        public Repository(DynamoDBContext context) => Context = context;
+        protected Repository(DynamoDBContext context) => Context = context;
     }
 }
