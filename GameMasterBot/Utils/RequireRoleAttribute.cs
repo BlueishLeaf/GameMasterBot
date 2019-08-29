@@ -16,7 +16,9 @@ namespace GameMasterBot.Utils
         {
             if (!(context.User is SocketGuildUser gUser))
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
-            return Task.FromResult(gUser.Roles.Any(r => r.Name == _name) ? PreconditionResult.FromSuccess() : PreconditionResult.FromError($"You must have a role named {_name} to run this command."));
+            if (gUser.Roles.Any(r => r.Name == _name) || gUser.GuildPermissions.Administrator)
+                return Task.FromResult(PreconditionResult.FromSuccess());
+            return Task.FromResult(PreconditionResult.FromError($"You must have a role named {_name} to run this command."));
         }
     }
 }

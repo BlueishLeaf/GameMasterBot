@@ -38,14 +38,34 @@ namespace GameMasterBot.Utils
                     }
                 }
             }.Build();
-
-        public static Embed CampaignList(string title, IEnumerable<ICampaign> campaigns) =>
+        
+        public static Embed Overview() =>
             new EmbedBuilder
             {
-                Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
-                Description = "For more info on a specific campaign, use the `!campaign info 'campaign'` command.",
+                Author = new EmbedAuthorBuilder().WithName("How to use Game Master Bot").WithIconUrl(IconUrl),
+                Description = "**Note:** Before continuing with this bot, ensure that a role called 'Game Master' exists on the server. A user requires this role in order to create a campaign.",
                 Color = Color.Blue,
-                Fields = BuildFieldsForCampaigns(campaigns)
+                Fields = new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Creating a Campaign",
+                        Value = "Creating a campaign is as simple as using the `!campaign add` command. This will not only create the campaign in the bot's system, but also create the relevant channels and roles.",
+                        IsInline = false
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Scheduling a Session",
+                        Value = "Once you have created a campaign, you can use either the `!session add` or `!session schedule` commands to plan a session. The difference between the two commands is that `add` is used to create once-off AdHoc sessions whereas `schedule` is used to create a recurring session, either Daily, Weekly, BiWeekly, or Monthly. Players are reminded of a session 30 minutes before, and once more when the session begins.",
+                        IsInline = false
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Further Help",
+                        Value = "To get further help with this bot, you can use the `!help` or `!?` command to get a list of all bot commands. For help with a particular command, use the `!help commandName` command.",
+                        IsInline = false
+                    }
+                }
             }.Build();
 
         public static Embed SessionInfo(string title, ISession session) =>
@@ -115,6 +135,109 @@ namespace GameMasterBot.Utils
                 }
             }.Build();
         }
+        
+        // TODO: Tidy up boi
+        public static Embed CampaignSummary(ICampaign campaign, IEnumerable<ISession> sessions)
+        {
+            sessions = sessions.ToList();
+            if (!sessions.Any())
+                return new EmbedBuilder
+                {
+                    Author =
+                        new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
+                    Description =
+                        "For a list of all campaigns on this server, use the `!campaign server` or `!campaign *` commands.",
+                    Color = Color.Purple,
+                    Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.CreatedBy}"),
+                    Fields = new List<EmbedFieldBuilder>
+                    {
+                        new EmbedFieldBuilder
+                        {
+                            Name = "System",
+                            Value = campaign.System,
+                            IsInline = true
+                        },
+                        new EmbedFieldBuilder
+                        {
+                            Name = "Game Master",
+                            Value = campaign.GameMasterName,
+                            IsInline = true
+                        },
+                        new EmbedFieldBuilder
+                        {
+                            Name = "Players",
+                            Value = string.Join(", ", campaign.Players),
+                            IsInline = true
+                        },
+                        new EmbedFieldBuilder
+                        {
+                            Name = "Upcoming Sessions",
+                            Value = "No sessions currently scheduled.",
+                            IsInline = false
+                        }
+                    }
+                }.Build();
+            string dates = null, times = null, schedules = null;
+            foreach (var session in sessions)
+            {
+                dates += session.Date.ToShortDateString() + "\n";
+                times += session.Date.ToShortTimeString() + "\n";
+                schedules += session.Schedule + "\n";
+            }
+            return new EmbedBuilder
+            {
+                Author = new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
+                Description =
+                    "For a list of all campaigns on this server, use the `!campaign server` or `!campaign *` commands.",
+                Color = Color.Purple,
+                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.CreatedBy}"),
+                Fields = new List<EmbedFieldBuilder>
+                {
+                    new EmbedFieldBuilder
+                    {
+                        Name = "System",
+                        Value = campaign.System,
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Game Master",
+                        Value = campaign.GameMasterName,
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Players",
+                        Value = string.Join(", ", campaign.Players),
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Upcoming Sessions",
+                        Value = "*Note: All session times are given in Universal Time(UTC)*",
+                        IsInline = false
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Date",
+                        Value = dates,
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Time",
+                        Value = times,
+                        IsInline = true
+                    },
+                    new EmbedFieldBuilder
+                    {
+                        Name = "Schedule",
+                        Value = schedules,
+                        IsInline = true
+                    }
+                }
+            }.Build();
+        }
 
         public static Embed CommandList(IEnumerable<CommandMatch> commands) =>
             new EmbedBuilder
@@ -138,7 +261,7 @@ namespace GameMasterBot.Utils
             matches.Select(match => new EmbedFieldBuilder
             {
                 Name = "`!" + string.Join("`, `!", match.Command.Aliases) + "`",
-                Value = $"*Summary:* {match.Command.Summary}\n*Parameters:* {(match.Command.Parameters.Any() ? string.Join(", ", match.Command.Parameters.Select(parameter => parameter.Name)) : "None")}", IsInline = false
+                Value = $"**Summary:** {match.Command.Summary}\n**Parameters:** {(match.Command.Parameters.Any() ? "\n" + string.Join("\n", match.Command.Parameters.Select(parameter => $"*{parameter.Name}:* {parameter.Summary}")) : "*None*")}", IsInline = false
             }).ToList();
 
         private static List<EmbedFieldBuilder> BuildFieldsForModules(IEnumerable<ModuleInfo> modules) =>

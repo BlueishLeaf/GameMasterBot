@@ -7,6 +7,7 @@ using Common.Interfaces.DataAccess;
 using Common.Interfaces.Entities.Core;
 using Discord.WebSocket;
 using Entities.Core;
+using GameMasterBot.Utils;
 
 namespace GameMasterBot.Services
 {
@@ -55,6 +56,7 @@ namespace GameMasterBot.Services
                     ChannelId = session.ChannelId,
                     Schedule = session.Schedule,
                     Date = session.Date,
+                    Expiry = DateUtils.ToUnixEpochTime(session.Date),
                     ReminderSent = false,
                     TriggerSent = false
                 });
@@ -111,6 +113,7 @@ namespace GameMasterBot.Services
                 ChannelId = channelId,
                 Schedule = schedule,
                 Date = date,
+                Expiry = DateUtils.ToUnixEpochTime(date),
                 ReminderSent = false,
                 TriggerSent = false
             };
@@ -129,8 +132,6 @@ namespace GameMasterBot.Services
             SetTimerDelay();
         }
         
-        public async Task<ICampaign> GetCampaign(string serverId, string campaignId) => await _unitOfWork.Campaigns.Get(serverId, campaignId);
-
         public async Task CancelForDay(ulong serverId, string campaignId, DateTime date)
         {
             var sessions = _unitOfWork.Sessions.GetForCampaignAfterDate(serverId, campaignId, date).ToList();

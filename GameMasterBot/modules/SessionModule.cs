@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utils;
@@ -13,9 +12,14 @@ namespace GameMasterBot.Modules
     [Group("session"), Name("Session")]
     public class SessionModule: ModuleBase<SocketCommandContext>
     {
-        private readonly SessionService _service;
+        private readonly SessionService _sessionService;
+        private readonly CampaignService _campaignService;
 
-        public SessionModule(SessionService service) => _service = service;
+        public SessionModule(SessionService sessionService, CampaignService campaignService)
+        {
+            _sessionService = sessionService;
+            _campaignService = campaignService;
+        }
 
         [RequireRole("Game Master")]
         [Command("add"), Alias("+")]
@@ -51,7 +55,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to add a session for this campaign.");
 
@@ -68,7 +72,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _service.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign, "AdHoc", parsedDate.ToUniversalTime()).Result;
+                var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign, "AdHoc", parsedDate.ToUniversalTime()).Result;
                 await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Added for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
@@ -114,7 +118,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to schedule a session for this campaign.");
 
@@ -157,7 +161,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _service.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign , schedule, parsedDate.ToUniversalTime()).Result;
+                var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign , schedule, parsedDate.ToUniversalTime()).Result;
                 await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Scheduled for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
@@ -198,7 +202,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _service.GetUpcoming(Context.Guild.Id, campaignId).FirstOrDefault();
+                var session = _sessionService.GetUpcoming(Context.Guild.Id, campaignId).FirstOrDefault();
                 if (session == null)
                     return GameMasterResult.ErrorResult("This campaign does not exist or the next session for this campaign has not been scheduled yet.");
 
@@ -244,7 +248,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var sessions = _service.GetUpcoming(Context.Guild.Id, campaignId).ToList();
+                var sessions = _sessionService.GetUpcoming(Context.Guild.Id, campaignId).ToList();
                 if (!sessions.Any())
                     return GameMasterResult.ErrorResult("This campaign does not exist or the next session for this campaign has not been scheduled yet.");
 
@@ -284,7 +288,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -294,7 +298,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelNext(Context.Guild.Id, campaignId);
+                await _sessionService.CancelNext(Context.Guild.Id, campaignId);
                 await ReplyAsync("Next session cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
@@ -339,7 +343,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -349,7 +353,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelForDay(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
+                await _sessionService.CancelForDay(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
                 await ReplyAsync($"All sessions on {parsedDate.ToShortDateString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
@@ -398,7 +402,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -408,7 +412,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelForPeriod(Context.Guild.Id, campaignId, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
+                await _sessionService.CancelForPeriod(Context.Guild.Id, campaignId, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
                 await ReplyAsync($"All sessions from {parsedAfterDate.ToShortDateString()} to {parsedBeforeDate.ToShortDateString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
@@ -454,7 +458,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -464,7 +468,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelForDayTime(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
+                await _sessionService.CancelForDayTime(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
                 await ReplyAsync($"Session on {parsedDate.ToShortDateString()} at {parsedDate.ToShortTimeString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
@@ -510,7 +514,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _service.GetCampaign(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -520,7 +524,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _service.CancelSchedule(campaignId, parsedDate);
+                await _sessionService.CancelSchedule(campaignId, parsedDate);
                 await ReplyAsync($"Session schedule on {parsedDate.ToShortDateString()} at {parsedDate.ToShortTimeString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }

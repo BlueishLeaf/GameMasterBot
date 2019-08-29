@@ -47,7 +47,7 @@ namespace GameMasterBot.modules
         [Summary("Displays this bot's version number.")]
         public async Task<RuntimeResult> VersionAsync()
         {
-            await ReplyAsync("GameMasterBot Alpha v0.1.1");
+            await ReplyAsync("GameMasterBot v1.0");
             return GameMasterResult.SuccessResult();
         }
 
@@ -56,6 +56,14 @@ namespace GameMasterBot.modules
         public async Task<RuntimeResult> RoadmapAsync()
         {
             await ReplyAsync("You can check the roadmap and source code at: https://github.com/BlueishLeaf/GameMasterBot");
+            return GameMasterResult.SuccessResult();
+        }
+        
+        [Command("tutorial"), Alias("overview")]
+        [Summary("Displays a tutorial on how to use the bot.")]
+        public async Task<RuntimeResult> OverviewAsync()
+        {
+            await ReplyAsync(embed: EmbedUtils.Overview());
             return GameMasterResult.SuccessResult();
         }
     }

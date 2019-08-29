@@ -39,6 +39,6 @@ namespace GameMasterBot.Services
 
         public IEnumerable<ICampaign> GetForServer(string serverId) => _unitOfWork.Campaigns.GetForServer(serverId);
 
-        public IEnumerable<ICampaign> GetForPlayer(string serverId, string playerName) => _unitOfWork.Campaigns.GetForPlayer(serverId, playerName);
+        public IEnumerable<ICampaign> GetForPlayer(string serverId, string playerName, string playerNickname) => _unitOfWork.Campaigns.GetForServer(serverId).Where(campaign => campaign.Players.Contains(playerName) || campaign.Players.Contains(playerNickname)  || campaign.GameMasterName == playerName || campaign.GameMasterName == playerNickname);
     }
 }

@@ -3,12 +3,8 @@
 GameMasterBot is a discord bot for managing TRPG campaigns. With it, you can easily automate the tasks associated with creating a campaign, such as creating text and voice channels, creating and assigning roles, and scheduling or cancelling sessions.
 
 ## Roadmap
-- Support for more fine-grain control over scheduling and cancelling sessions.
-- A more descriptive and helpful 'help' command.
-- Support for music playback and the ability to create playlists for campaigns.
-- More detailed views regarding schedules and players.
-- A more streamlined approach to creating campaigns.
 - Provide a cloudformations template to automate the infrastructure required to build the bot.
+- Create a wiki to easily document the commands.
 
 ## How to Build and Run
 - Install .Net Core 2.2
@@ -19,3 +15,4 @@ GameMasterBot is a discord bot for managing TRPG campaigns. With it, you can eas
 - Name the table "GameMasterBotTbl".
 - Set "Pk" as the partition key and "Sk" as the sort key.
 - Create a global secondary index called "Entity-Sk-Index", which has "Entity" as its partition key, and "Sk" as its sort key.
+- Enable TTL on the "Expiry" attribute.

@@ -21,7 +21,7 @@ namespace GameMasterBot
                 var client = services.GetRequiredService<DiscordSocketClient>();
                 client.Log += LogAsync;
 
-                await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_DEV_TOKEN"));
+                await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
                 await client.StartAsync();
 
                 await services.GetRequiredService<CommandHandler>().InitializeAsync();

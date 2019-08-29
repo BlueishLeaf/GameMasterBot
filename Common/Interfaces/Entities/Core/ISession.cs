@@ -13,5 +13,6 @@ namespace Common.Interfaces.Entities.Core
         DateTime Date { get; set; }
         bool ReminderSent { get; set; }
         bool TriggerSent { get; set; }
+        long Expiry { get; set; } 
     }
 }

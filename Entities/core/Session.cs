@@ -14,5 +14,6 @@ namespace Entities.Core
         public DateTime Date { get; set; }
         public bool ReminderSent { get; set; }
         public bool TriggerSent { get; set; }
+        public long Expiry { get; set; }
     }
 }
