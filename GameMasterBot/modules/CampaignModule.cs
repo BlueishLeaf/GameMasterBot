@@ -252,6 +252,130 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult(e.Message);
             }
         }
+        
+        [Command("add-player"), Alias("ap")]
+        [Summary("Adds a player to an existing campaign.")]
+        public async Task<RuntimeResult> AddPlayerAsync(
+            [Summary("The username of the player.")] string player,
+            [Summary("The name of the campaign.")] string campaign = null)
+        {
+            #region Validation
+            
+            #region Player
+
+            var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase));
+            if (guildUser == null)
+                return GameMasterResult.ErrorResult("That player does not exist in this server.");
+            
+            #endregion
+
+            #region Campaign
+
+            string campaignId;
+            if (campaign == null)
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+
+            #endregion
+
+            #endregion
+
+            try
+            {
+                var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
+                // Check if player is already in the campaign
+                if (campaignInfo.Players.Contains(guildUser.Username))
+                    return GameMasterResult.ErrorResult("Player is already a member of this campaign.");
+                campaignInfo.Players.Add(guildUser.Username);
+                // Campaigns are immutable, so we need to delete and add it again with the new player
+                _campaignService.Remove(Context.Guild.Id, campaignId);
+                var newCampaignInfo = _campaignService.Create(campaignInfo);
+                // Give the new player the campaign role
+                var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"player:-{campaignId}");
+                if (campaignRole == null)
+                    return GameMasterResult.ErrorResult("No player role exists for this campaign.");
+                await guildUser.AddRoleAsync(campaignRole);
+                await ReplyAsync($"Successfully added {guildUser.Username} as a player.", embed: EmbedUtils.CampaignInfo(newCampaignInfo));
+                return GameMasterResult.SuccessResult();
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
+        
+        [Command("remove-player"), Alias("rp")]
+        [Summary("Removes a player from an existing campaign.")]
+        public async Task<RuntimeResult> RemovePlayerAsync(
+            [Summary("The username of the player.")] string player,
+            [Summary("The name of the campaign.")] string campaign = null)
+        {
+            #region Validation
+            
+            #region Player
+
+            var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase));
+            if (guildUser == null)
+                return GameMasterResult.ErrorResult("That player does not exist in this server.");
+            
+            #endregion
+
+            #region Campaign
+
+            string campaignId;
+            if (campaign == null)
+            {
+                campaignId = Context.Channel.Name;
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+            else
+            {
+                campaignId = campaign.Replace(' ', '-').ToLower();
+                var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
+                if (campaignTextChannel == null)
+                    return GameMasterResult.ErrorResult("Campaign does not exist on this server.");
+            }
+
+            #endregion
+
+            #endregion
+
+            try
+            {
+                var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
+                // Check if player is actually not in the campaign
+                if (!campaignInfo.Players.Contains(guildUser.Username))
+                    return GameMasterResult.ErrorResult("Player is not a member of this campaign.");
+                campaignInfo.Players.Remove(guildUser.Username);
+                // Campaigns are immutable, so we need to delete and add it again with the updated player list
+                _campaignService.Remove(Context.Guild.Id, campaignId);
+                var newCampaignInfo = _campaignService.Create(campaignInfo);
+                // Remove the campaign role from the player
+                var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"player:-{campaignId}");
+                if (campaignRole == null)
+                    return GameMasterResult.ErrorResult("No player role exists for this campaign.");
+                await guildUser.RemoveRoleAsync(campaignRole);
+                await ReplyAsync($"Successfully removed {guildUser.Username} from the campaign.", embed: EmbedUtils.CampaignInfo(newCampaignInfo));
+                return GameMasterResult.SuccessResult();
+            }
+            catch (Exception e)
+            {
+                return GameMasterResult.ErrorResult(e.Message);
+            }
+        }
 
         [Command("server"), Alias("guild", "*")]
         [Summary("Returns all information about the campaigns on this server.")]

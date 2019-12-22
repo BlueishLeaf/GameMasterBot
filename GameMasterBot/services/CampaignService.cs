@@ -32,6 +32,12 @@ namespace GameMasterBot.Services
             _unitOfWork.Campaigns.Add(campaign);
             return campaign;
         }
+        
+        public ICampaign Create(ICampaign campaign)
+        {
+            _unitOfWork.Campaigns.Add(campaign);
+            return campaign;
+        }
 
         public void Remove(ulong serverId, string campaignId)
         {
