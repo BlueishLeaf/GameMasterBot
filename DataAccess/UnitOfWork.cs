@@ -1,5 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
-using Common.Interfaces.DataAccess;
+﻿using Common.Interfaces.DataAccess;
 using Common.Interfaces.DataAccess.Repositories;
 using DataAccess.Repositories;
 

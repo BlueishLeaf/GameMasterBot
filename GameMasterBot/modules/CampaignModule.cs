@@ -6,7 +6,6 @@ using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utils;
-// ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
 {
@@ -94,36 +93,22 @@ namespace GameMasterBot.Modules
                 // TODO Move elsewhere, and allow users to pick color
                 Color roleColor;
                 var random = new Random();
-                switch (random.Next(5))
+                roleColor = random.Next(5) switch
                 {
-                    case 0:
-                        roleColor = Color.Blue;
-                        break;
-                    case 1:
-                        roleColor = Color.Green;
-                        break;
-                    case 2:
-                        roleColor = Color.Purple;
-                        break;
-                    case 3:
-                        roleColor = Color.Orange;
-                        break;
-                    case 4:
-                        roleColor = Color.Red;
-                        break;
-                    case 5:
-                        roleColor = Color.Teal;
-                        break;
-                    default:
-                        roleColor = Color.Default;
-                        break;
-                }
+                    0 => Color.Blue,
+                    1 => Color.Green,
+                    2 => Color.Purple,
+                    3 => Color.Orange,
+                    4 => Color.Red,
+                    5 => Color.Teal,
+                    _ => Color.Default
+                };
 
                 var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Player") ??
-                    (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Player", null, roleColor).Result;
+                                 (IRole)Context.Guild.CreateRoleAsync($"Player: {campaign.Name}", null, roleColor).Result;
 
                 var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Game Master") ??
-                                 (IRole)Context.Guild.CreateRoleAsync($"{campaign.Name} Game Master", null, roleColor).Result;
+                                 (IRole)Context.Guild.CreateRoleAsync($"Game Master: {campaign.Name}", null, roleColor).Result;
 
                 // Create the category channel for this campaign's system if one does not already exist
                 var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == campaign.System) ??
@@ -165,7 +150,7 @@ namespace GameMasterBot.Modules
                 #endregion
 
                 // Send a rich text embed representing the new campaign
-                await ReplyAsync(embed: EmbedUtils.CampaignInfo(campaign));
+                await ReplyAsync("Campaign created successfully!", embed: EmbedUtils.CampaignInfo(campaign));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -208,9 +193,9 @@ namespace GameMasterBot.Modules
             if (voiceChannel != null) await Context.Guild.GetVoiceChannel(voiceChannel.Id).DeleteAsync();
 
             // Delete the roles for this campaign if they exists
-            var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"{campaignId}-player");
+            var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"player:-{campaignId}");
             if (campaignRole != null) await Context.Guild.GetRole(campaignRole.Id).DeleteAsync();
-            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"{campaignId}-game-master");
+            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name.ToLower().Replace(' ', '-') == $"game-master:-{campaignId}");
             if (gmRole != null) await Context.Guild.GetRole(gmRole.Id).DeleteAsync();
 
             #endregion
@@ -302,7 +287,7 @@ namespace GameMasterBot.Modules
                 foreach (var campaign in campaigns)
                 {
                     var sessions = _sessionService.GetUpcoming(Context.Guild.Id, campaign.Id);
-                    await guildUser.SendMessageAsync(embed: EmbedUtils.CampaignSummary(campaign, sessions));
+                    await guildUser.SendMessageAsync("I PMed you with your personal campaign details.", embed: EmbedUtils.CampaignSummary(campaign, sessions));
                 }
                 return GameMasterResult.SuccessResult();
             }

@@ -21,7 +21,6 @@ namespace GameMasterBot.Modules
             _campaignService = campaignService;
         }
 
-        [RequireRole("Game Master")]
         [Command("add"), Alias("+")]
         [Summary("Creates a new session for this campaign.")]
         public async Task<RuntimeResult> AddAsync(
@@ -30,6 +29,18 @@ namespace GameMasterBot.Modules
             [Summary("The schedule type for the session.")] string campaign = null)
         {
             #region Validation
+
+            #region Timezone Role
+
+            var guildUser = Context.Guild.Users.FirstOrDefault(user => user.Id == Context.User.Id);
+            if (guildUser == null)
+                return GameMasterResult.ErrorResult("Could not find you in the server.");
+
+            var tzRole = guildUser.Roles.FirstOrDefault(role => role.Name.Contains("Timezone:"));
+            if (tzRole == null)
+                return GameMasterResult.ErrorResult("Please add a timezone role using `!timezone 'your timezone'`");
+            
+            #endregion
 
             #region Campaign
 
@@ -62,9 +73,17 @@ namespace GameMasterBot.Modules
             #endregion
 
             #region Date/Time
-
+            
             if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
                 return GameMasterResult.ErrorResult("Invalid date.");
+            
+            // Convert time to UTC using timezone role
+            var tzId = tzRole.Name.Remove(0, 10);
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+            if (tzInfo == null)
+                return GameMasterResult.ErrorResult("Timezone not found.");
+
+            var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
 
             #endregion
 
@@ -72,7 +91,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign, "AdHoc", parsedDate.ToUniversalTime()).Result;
+                var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign, "AdHoc", utcTime).Result;
                 await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Added for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
@@ -82,7 +101,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("schedule"), Alias("++")]
         [Summary("Schedules a new session for a campaign")]
         public async Task<RuntimeResult> ScheduleAsync(
@@ -91,11 +109,23 @@ namespace GameMasterBot.Modules
             [Summary("The schedule type for the session.")] string schedule,
             [Summary("The schedule type for the session.")] string campaign = null)
         {
+            // TODO: Clean this up and reduce duplication
             #region Validation
+            
+            #region Timezone Role
+
+            var guildUser = Context.Guild.Users.FirstOrDefault(user => user.Id == Context.User.Id);
+            if (guildUser == null)
+                return GameMasterResult.ErrorResult("Could not find you in the server.");
+
+            var tzRole = guildUser.Roles.FirstOrDefault(role => role.Name.Contains("Timezone:"));
+            if (tzRole == null)
+                return GameMasterResult.ErrorResult("Please add a timezone role using `!timezone 'your timezone'`");
+            
+            #endregion
 
             #region Campaign
 
-            // TODO: Clean this up and reduce duplication
             string campaignId;
             ulong channelId;
             if (campaign == null)
@@ -123,13 +153,19 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult("You do not have permission to schedule a session for this campaign.");
 
             #endregion
-            
-
 
             #region Date/Time
 
             if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
                 return GameMasterResult.ErrorResult("Invalid date.");
+            
+            // Convert time to UTC using timezone role
+            var tzId = tzRole.Name.Remove(1, 10);
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+            if (tzInfo == null)
+                return GameMasterResult.ErrorResult("Timezone not found.");
+
+            var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
 
             #endregion
 
@@ -161,7 +197,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign , schedule, parsedDate.ToUniversalTime()).Result;
+                var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign , schedule, utcTime).Result;
                 await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Scheduled for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
@@ -261,7 +297,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("cancel next"), Alias("cancel upcoming")]
         [Summary("Cancels the next session for a campaign")]
         public async Task<RuntimeResult> CancelNextAsync(
@@ -308,7 +343,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("cancel day"), Alias("cancel date")]
         [Summary("Cancels all sessions on a given date for a campaign")]
         public async Task<RuntimeResult> CancelDayAsync(
@@ -353,7 +387,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _sessionService.CancelForDay(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
+                await _sessionService.CancelForDay(Context.Guild.Id, campaignId, parsedDate);
                 await ReplyAsync($"All sessions on {parsedDate.ToShortDateString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
@@ -363,7 +397,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("cancel period"), Alias("cancel range")]
         [Summary("Cancels sessions on a range of dates for a campaign.")]
         public async Task<RuntimeResult> CancelPeriodAsync(
@@ -412,7 +445,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _sessionService.CancelForPeriod(Context.Guild.Id, campaignId, parsedAfterDate.ToUniversalTime(), parsedBeforeDate.ToUniversalTime());
+                await _sessionService.CancelForPeriod(Context.Guild.Id, campaignId, parsedAfterDate, parsedBeforeDate);
                 await ReplyAsync($"All sessions from {parsedAfterDate.ToShortDateString()} to {parsedBeforeDate.ToShortDateString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
@@ -422,7 +455,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("cancel exact"), Alias("cancel specific")]
         [Summary("Cancels a specific session for a campaign")]
         public async Task<RuntimeResult> CancelDayTimeAsync(
@@ -431,11 +463,31 @@ namespace GameMasterBot.Modules
             [Summary("The campaign that the session belongs to.")] string campaign = null)
         {
             #region Validation
+            
+            #region Timezone Role
+
+            var guildUser = Context.Guild.Users.FirstOrDefault(user => user.Id == Context.User.Id);
+            if (guildUser == null)
+                return GameMasterResult.ErrorResult("Could not find you in the server.");
+
+            var tzRole = guildUser.Roles.FirstOrDefault(role => role.Name.Contains("Timezone:"));
+            if (tzRole == null)
+                return GameMasterResult.ErrorResult("Please add a timezone role using `!timezone 'your timezone'`");
+            
+            #endregion
 
             #region Date
 
             if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
                 return GameMasterResult.ErrorResult("Invalid date.");
+            
+            // Convert time to UTC using timezone role
+            var tzId = tzRole.Name.Remove(1, 10);
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+            if (tzInfo == null)
+                return GameMasterResult.ErrorResult("Timezone not found.");
+
+            var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
 
             #endregion
 
@@ -468,8 +520,8 @@ namespace GameMasterBot.Modules
 
             try
             {
-                await _sessionService.CancelForDayTime(Context.Guild.Id, campaignId, parsedDate.ToUniversalTime());
-                await ReplyAsync($"Session on {parsedDate.ToShortDateString()} at {parsedDate.ToShortTimeString()} cancelled successfully.");
+                await _sessionService.CancelForDayTime(Context.Guild.Id, campaignId, utcTime);
+                await ReplyAsync($"Session on {parsedDate.ToShortDateString()} at {utcTime.ToShortTimeString()} cancelled successfully.");
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -478,7 +530,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("cancel schedule"), Alias("cancel recurring")]
         [Summary("Removes a recurring session for this campaign")]
         public async Task<RuntimeResult> CancelScheduleAsync(

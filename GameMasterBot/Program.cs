@@ -16,19 +16,17 @@ namespace GameMasterBot
 
         private static async Task MainAsync()
         {
-            using (var services = BuildServiceProvider())
-            {
-                var client = services.GetRequiredService<DiscordSocketClient>();
-                client.Log += LogAsync;
+            using var services = BuildServiceProvider();
+            var client = services.GetRequiredService<DiscordSocketClient>();
+            client.Log += LogAsync;
 
-                await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
-                await client.StartAsync();
+            await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
+            await client.StartAsync();
 
-                await services.GetRequiredService<CommandHandler>().InitializeAsync();
-                services.GetRequiredService<SessionService>().Initialize();
+            await services.GetRequiredService<CommandHandler>().InitializeAsync();
+            services.GetRequiredService<SessionService>().Initialize();
 
-                await Task.Delay(-1);
-            }
+            await Task.Delay(-1);
         }
 
         private static ServiceProvider BuildServiceProvider() => new ServiceCollection()

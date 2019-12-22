@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Common.Interfaces.Entities.Core;
 using Discord;
@@ -13,7 +14,6 @@ namespace GameMasterBot.Utils
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
-                Description = "For a list of all campaigns on this server, use the `!campaign server` or `!campaign *` commands.",
                 Color = Color.Purple,
                 Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.CreatedBy}"),
                 Fields = new List<EmbedFieldBuilder>
@@ -43,7 +43,7 @@ namespace GameMasterBot.Utils
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("How to use Game Master Bot").WithIconUrl(IconUrl),
-                Description = "**Note:** Before continuing with this bot, ensure that a role called 'Game Master' exists on the server. A user requires this role in order to create a campaign.",
+                Description = "**Note:** Before continuing with this bot, ensure that a role called 'Whitelisted' exists on the server. A user requires this role in order to create a campaign.",
                 Color = Color.Blue,
                 Fields = new List<EmbedFieldBuilder>
                 {
@@ -72,7 +72,7 @@ namespace GameMasterBot.Utils
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
-                Description = "*Note: All session times are given in Universal Time(UTC)*",
+                Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
                 Color = Color.Gold,
                 Fields = new List<EmbedFieldBuilder>
                 {
@@ -85,7 +85,7 @@ namespace GameMasterBot.Utils
                     new EmbedFieldBuilder
                     {
                         Name = "Time",
-                        Value = session.Date.ToShortTimeString(),
+                        Value = session.Date.ToString("HH:mm"),
                         IsInline = true
                     },
                     new EmbedFieldBuilder
@@ -104,13 +104,13 @@ namespace GameMasterBot.Utils
             foreach (var session in sessions)
             {
                 dates += session.Date.ToShortDateString() + "\n";
-                times += session.Date.ToShortTimeString() + "\n";
+                times += session.Date.ToString("HH:mm") + "\n";
                 schedules += session.Schedule + "\n";
             }
             return new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
-                Description = "*Note: All session times are given in Universal Time(UTC)*",
+                Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
                 Color = Color.Gold,
                 Fields = new List<EmbedFieldBuilder>
                 {
@@ -181,7 +181,7 @@ namespace GameMasterBot.Utils
             foreach (var session in sessions)
             {
                 dates += session.Date.ToShortDateString() + "\n";
-                times += session.Date.ToShortTimeString() + "\n";
+                times += session.Date.ToString("HH:mm") + "\n";
                 schedules += session.Schedule + "\n";
             }
             return new EmbedBuilder
@@ -214,7 +214,7 @@ namespace GameMasterBot.Utils
                     new EmbedFieldBuilder
                     {
                         Name = "Upcoming Sessions",
-                        Value = "*Note: All session times are given in Universal Time(UTC)*",
+                        Value = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
                         IsInline = false
                     },
                     new EmbedFieldBuilder

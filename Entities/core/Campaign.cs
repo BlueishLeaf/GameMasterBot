@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Amazon.DynamoDBv2.DataModel;
 using Common.Interfaces.Entities.Core;
 
 namespace Entities.Core

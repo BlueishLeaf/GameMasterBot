@@ -31,21 +31,14 @@ namespace GameMasterBot.Services
 
         private async Task CreateNextIfNecessary(ISession session)
         {
-            switch (session.Schedule)
+            session.Date = session.Schedule switch
             {
-                case "Daily":
-                    session.Date = session.Date.AddDays(1);
-                    break;
-                case "Weekly":
-                    session.Date = session.Date.AddDays(7);
-                    break;
-                case "BiWeekly":
-                    session.Date = session.Date.AddDays(14);
-                    break;
-                case "Monthly":
-                    session.Date = session.Date.AddMonths(1);
-                    break;
-            }
+                "Daily" => session.Date.AddDays(1),
+                "Weekly" => session.Date.AddDays(7),
+                "BiWeekly" => session.Date.AddDays(14),
+                "Monthly" => session.Date.AddMonths(1),
+                _ => session.Date
+            };
             if (session.Schedule != "AdHoc")
                 await _unitOfWork.Sessions.Add(new Session
                 {
@@ -67,7 +60,7 @@ namespace GameMasterBot.Services
             var sessions = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow.AddMinutes(-35));
             foreach (var session in sessions)
             {
-                var timeDiff = (session.Date - DateTime.Now).TotalMinutes;
+                var timeDiff = (session.Date - DateTime.UtcNow).TotalMinutes;
                 if (!(timeDiff <= 30) || session.ReminderSent && session.TriggerSent) continue;
                 var channelToNotify = (SocketTextChannel)_client.GetChannel(session.ChannelId);
                 if (timeDiff <= 0 && !session.TriggerSent)
@@ -94,8 +87,8 @@ namespace GameMasterBot.Services
             {
                 var nextSession = sessions.OrderBy(session => session.Date).First(session => session.TriggerSent == false);
                 var nextTime = !nextSession.ReminderSent
-                    ? nextSession.Date.Subtract(DateTime.Now).TotalSeconds - 1800
-                    : nextSession.Date.Subtract(DateTime.Now).TotalSeconds;
+                    ? nextSession.Date.Subtract(DateTime.UtcNow).TotalSeconds - 1800
+                    : nextSession.Date.Subtract(DateTime.UtcNow).TotalSeconds;
                 if (nextTime < 0) nextTime = 0;
                 if (nextTime > 86400) _timer.Change(TimeSpan.FromDays(1), TimeSpan.FromDays(1));
                 else _timer.Change(TimeSpan.FromSeconds(nextTime), TimeSpan.FromSeconds(nextTime));
