@@ -22,7 +22,7 @@ namespace GameMasterBot.Modules
             _sessionService = sessionService;
         }
 
-        [RequireRole("Game Master")]
+        [RequireRole("Whitelisted")]
         [Command("add", RunMode = RunMode.Async), Alias("create", "+")]
         [Summary("Creates a new campaign on this server, including channels and roles.")]
         public async Task<RuntimeResult> AddAsync(
@@ -159,7 +159,6 @@ namespace GameMasterBot.Modules
             }
         }
 
-        [RequireRole("Game Master")]
         [Command("remove", RunMode = RunMode.Async), Alias("delete", "-")]
         [Summary("Removes a campaign from this server, including channels and roles.")]
         public async Task<RuntimeResult> RemoveAsync(
@@ -181,7 +180,7 @@ namespace GameMasterBot.Modules
 
             var campaignId = name.ToLower().Replace(' ', '-');
             // Check to make sure that this user is the game master of the campaign
-            var campaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var campaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (campaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to remove this campaign.");
             
@@ -202,7 +201,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                _campaignService.Remove(Context.Guild.Id.ToString(), campaignId);
+                _campaignService.Remove(Context.Guild.Id, campaignId);
                 await ReplyAsync("Campaign removed successfully!");
                 return GameMasterResult.SuccessResult();
             }
@@ -243,7 +242,7 @@ namespace GameMasterBot.Modules
 
             try
             {
-                var campaignInfo = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+                var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
                 var sessionInfo = _sessionService.GetUpcoming(Context.Guild.Id, campaignId);
                 await ReplyAsync(embed: EmbedUtils.CampaignSummary(campaignInfo, sessionInfo));
                 return GameMasterResult.SuccessResult();
@@ -260,7 +259,7 @@ namespace GameMasterBot.Modules
         {
             try
             {
-                var campaigns = _campaignService.GetForServer(Context.Guild.Id.ToString());
+                var campaigns = _campaignService.GetForServer(Context.Guild.Id);
                 foreach (var campaign in campaigns)
                 {
                     var sessions = _sessionService.GetUpcoming(Context.Guild.Id, campaign.Id);
@@ -283,7 +282,7 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult("The user specified does not exist in this server");
             try
             {
-                var campaigns = _campaignService.GetForPlayer(Context.Guild.Id.ToString(), guildUser.Username, guildUser.Nickname);
+                var campaigns = _campaignService.GetForPlayer(Context.Guild.Id, guildUser.Username, guildUser.Nickname);
                 foreach (var campaign in campaigns)
                 {
                     var sessions = _sessionService.GetUpcoming(Context.Guild.Id, campaign.Id);

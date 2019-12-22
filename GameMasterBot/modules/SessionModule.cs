@@ -66,7 +66,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to add a session for this campaign.");
 
@@ -148,7 +148,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to schedule a session for this campaign.");
 
@@ -160,7 +160,7 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult("Invalid date.");
             
             // Convert time to UTC using timezone role
-            var tzId = tzRole.Name.Remove(1, 10);
+            var tzId = tzRole.Name.Remove(0, 10);
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
             if (tzInfo == null)
                 return GameMasterResult.ErrorResult("Timezone not found.");
@@ -323,7 +323,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -377,7 +377,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -435,7 +435,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -482,7 +482,7 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult("Invalid date.");
             
             // Convert time to UTC using timezone role
-            var tzId = tzRole.Name.Remove(1, 10);
+            var tzId = tzRole.Name.Remove(0, 10);
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
             if (tzInfo == null)
                 return GameMasterResult.ErrorResult("Timezone not found.");
@@ -510,7 +510,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
@@ -565,7 +565,7 @@ namespace GameMasterBot.Modules
             }
             
             // Check to make sure that this user is the game master of the campaign
-            var targetCampaign = await _campaignService.Get(Context.Guild.Id.ToString(), campaignId);
+            var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
             if (targetCampaign.GameMasterId != Context.User.Id)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 

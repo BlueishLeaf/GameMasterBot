@@ -33,12 +33,18 @@ namespace GameMasterBot.Services
             return campaign;
         }
 
-        public void Remove(string serverId, string campaignId) => _unitOfWork.Campaigns.Remove(serverId, campaignId);
+        public void Remove(ulong serverId, string campaignId)
+        {
+            _unitOfWork.Campaigns.Remove(serverId, campaignId);
+            // Delete any remnant session objects
+            var sessions= _unitOfWork.Sessions.GetForCampaign(serverId, campaignId);
+            _unitOfWork.Sessions.RemoveRange(sessions);
+        }
 
-        public async Task<ICampaign> Get(string serverId, string campaignId) => await _unitOfWork.Campaigns.Get(serverId, campaignId);
+        public async Task<ICampaign> Get(ulong serverId, string campaignId) => await _unitOfWork.Campaigns.Get(serverId, campaignId);
 
-        public IEnumerable<ICampaign> GetForServer(string serverId) => _unitOfWork.Campaigns.GetForServer(serverId);
+        public IEnumerable<ICampaign> GetForServer(ulong serverId) => _unitOfWork.Campaigns.GetForServer(serverId);
 
-        public IEnumerable<ICampaign> GetForPlayer(string serverId, string playerName, string playerNickname) => _unitOfWork.Campaigns.GetForServer(serverId).Where(campaign => campaign.Players.Contains(playerName) || campaign.Players.Contains(playerNickname)  || campaign.GameMasterName == playerName || campaign.GameMasterName == playerNickname);
+        public IEnumerable<ICampaign> GetForPlayer(ulong serverId, string playerName, string playerNickname) => _unitOfWork.Campaigns.GetForServer(serverId).Where(campaign => campaign.Players.Contains(playerName) || campaign.Players.Contains(playerNickname)  || campaign.GameMasterName == playerName || campaign.GameMasterName == playerNickname);
     }
 }

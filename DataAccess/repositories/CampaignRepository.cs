@@ -14,19 +14,19 @@ namespace DataAccess.Repositories
     {
         public CampaignRepository(DynamoDBContext context) : base(context) { }
 
-        public async Task<ICampaign> Get(string serverId, string campaignId) => await Context
+        public async Task<ICampaign> Get(ulong serverId, string campaignId) => await Context
             .LoadAsync<Campaign>(
                 $"Server#{serverId}", 
                 $"Campaign#{campaignId}");
 
-        public IEnumerable<ICampaign> GetForServer(string serverId) => Context
+        public IEnumerable<ICampaign> GetForServer(ulong serverId) => Context
             .QueryAsync<Campaign>(
                 $"Server#{serverId}",
                 QueryOperator.BeginsWith,
                 new[] { "Campaign#" })
             .GetNextSetAsync().Result;
 
-        public IEnumerable<ICampaign> GetForPlayer(string serverId, string playerName) => Context
+        public IEnumerable<ICampaign> GetForPlayer(ulong serverId, string playerName) => Context
             // TODO: Add filters
             .QueryAsync<Campaign>(
                 $"Server#{serverId}",
@@ -45,7 +45,7 @@ namespace DataAccess.Repositories
             Context.SaveAsync(campaign as Campaign);
         }
 
-        public void Remove(string serverId, string campaignId) =>
+        public void Remove(ulong serverId, string campaignId) =>
             Context.DeleteAsync(new DynamoDbItem
             {
                 Pk = $"Server#{serverId}",
