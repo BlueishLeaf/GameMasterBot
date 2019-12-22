@@ -67,7 +67,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to add a session for this campaign.");
 
             #endregion
@@ -149,7 +149,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to schedule a session for this campaign.");
 
             #endregion
@@ -324,7 +324,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
@@ -378,7 +378,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
@@ -436,7 +436,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
@@ -511,7 +511,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
@@ -566,7 +566,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var targetCampaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (targetCampaign.GameMasterId != Context.User.Id)
+            if (targetCampaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("You do not have permission to cancel a session for this campaign.");
 
             #endregion
