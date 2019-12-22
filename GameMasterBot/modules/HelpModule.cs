@@ -46,7 +46,7 @@ namespace GameMasterBot.modules
         [Summary("Displays this bot's version number.")]
         public async Task<RuntimeResult> VersionAsync()
         {
-            await ReplyAsync("GameMasterBot v0.8");
+            await ReplyAsync("GameMasterBot v1.0.0");
             return GameMasterResult.SuccessResult();
         }
 

@@ -74,7 +74,7 @@ namespace GameMasterBot.modules
 
             var localTime = TimeZoneInfo.ConvertTimeFromUtc(parsedTime, tzInfo);
 
-            await ReplyAsync($"{parsedTime:HH:mm} UTC = {localTime:HH:mm} Local Time.");
+            await ReplyAsync($"{parsedTime:HH:mm} UTC = {localTime:HH:mm} {tzRole.Name.Remove(0, 10)}.");
             return GameMasterResult.SuccessResult();
         } 
     }
