@@ -34,7 +34,7 @@ namespace GameMasterBot.modules
             var oldRole = guildUser.Roles.FirstOrDefault(role => role.Name.Contains("Timezone:"));
             if (oldRole != null)
                 await guildUser.RemoveRoleAsync(oldRole);
-        
+
             // Add the timezone role to the user
             await guildUser.AddRoleAsync(tzRole);
 

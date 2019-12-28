@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -60,7 +61,8 @@ namespace GameMasterBot.Modules
             #region GameMaster
 
             // Check if GM exists in the server
-            if (Context.Guild.Users.FirstOrDefault(user => user.Username == gameMaster || user.Nickname == gameMaster) == null)
+            var gmUser = Context.Guild.Users.FirstOrDefault(user => user.Username == gameMaster || user.Nickname == gameMaster);
+            if (gmUser == null)
                 return GameMasterResult.ErrorResult($"The campaign's GM({gameMaster}) was not found in this server.");
 
             #endregion
@@ -75,10 +77,17 @@ namespace GameMasterBot.Modules
 
             #region Players
 
+            var playerUsernames = new List<string>();
             foreach (var player in players)
-                if (Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase) || string.Equals(user.Nickname, player, StringComparison.CurrentCultureIgnoreCase)) == null)
+            {
+                var guildPlayer = Context.Guild.Users.FirstOrDefault(user =>
+                    string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase) ||
+                    string.Equals(user.Nickname, player, StringComparison.CurrentCultureIgnoreCase));
+                if (guildPlayer == null)
                     return GameMasterResult.ErrorResult($"One of the campaign's players({player}) was not found in this server.");
-
+                playerUsernames.Add(guildPlayer.Username);
+            }
+            
             #endregion
 
             #endregion
@@ -86,7 +95,7 @@ namespace GameMasterBot.Modules
             try
             {
                 // Send input to service to create the campaign in the database
-                var campaign = _campaignService.Create(name, system, gameMaster, Context.User.Id, url, players, Context.User.ToString(), Context.Guild.Name, Context.Guild.Id);
+                var campaign = _campaignService.Create(name, system, gmUser.Username, gmUser.Id, url, playerUsernames, Context.User.ToString(), Context.Guild.Name, Context.Guild.Id);
 
                 #region Guild Administration
 
@@ -104,10 +113,10 @@ namespace GameMasterBot.Modules
                     _ => Color.Default
                 };
 
-                var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Player") ??
+                var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Player: {campaign.Name}") ??
                                  (IRole)Context.Guild.CreateRoleAsync($"Player: {campaign.Name}", null, roleColor).Result;
 
-                var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"{campaign.Name} Game Master") ??
+                var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Game Master: {campaign.Name}") ??
                                  (IRole)Context.Guild.CreateRoleAsync($"Game Master: {campaign.Name}", null, roleColor).Result;
 
                 // Create the category channel for this campaign's system if one does not already exist
@@ -180,8 +189,9 @@ namespace GameMasterBot.Modules
 
             var campaignId = name.ToLower().Replace(' ', '-');
             // Check to make sure that this user is the game master of the campaign
-            var campaign = await _campaignService.Get(Context.Guild.Id, campaignId);
-            if (campaign.GameMasterId != Context.User.Id && !Context.Guild.CurrentUser.GuildPermissions.Administrator)
+            var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
+            var commandIssuer = Context.Guild.GetUser(Context.User.Id);
+            if (campaignInfo.GameMasterId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)                
                 return GameMasterResult.ErrorResult("You do not have permission to remove this campaign.");
             
             var textChannel = Context.Guild.TextChannels.FirstOrDefault(channel => channel.Name == campaignId);
@@ -263,7 +273,9 @@ namespace GameMasterBot.Modules
             
             #region Player
 
-            var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase));
+            var guildUser = Context.Guild.Users.FirstOrDefault(user =>
+                string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase) ||
+                string.Equals(user.Nickname, player, StringComparison.CurrentCultureIgnoreCase));
             if (guildUser == null)
                 return GameMasterResult.ErrorResult("That player does not exist in this server.");
             
@@ -294,6 +306,12 @@ namespace GameMasterBot.Modules
             try
             {
                 var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
+                var commandIssuer = Context.Guild.GetUser(Context.User.Id);
+                if (campaignInfo.GameMasterId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+                    return GameMasterResult.ErrorResult("You do not have permission to remove this campaign.");
+                // If there are no players, instantiate the list
+                if (campaignInfo.Players == null)
+                    campaignInfo.Players = new List<string>();
                 // Check if player is already in the campaign
                 if (campaignInfo.Players.Contains(guildUser.Username))
                     return GameMasterResult.ErrorResult("Player is already a member of this campaign.");
@@ -325,7 +343,9 @@ namespace GameMasterBot.Modules
             
             #region Player
 
-            var guildUser = Context.Guild.Users.FirstOrDefault(user => string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase));
+            var guildUser = Context.Guild.Users.FirstOrDefault(user =>
+                string.Equals(user.Username, player, StringComparison.CurrentCultureIgnoreCase) ||
+                string.Equals(user.Nickname, player, StringComparison.CurrentCultureIgnoreCase));
             if (guildUser == null)
                 return GameMasterResult.ErrorResult("That player does not exist in this server.");
             
@@ -356,6 +376,9 @@ namespace GameMasterBot.Modules
             try
             {
                 var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
+                var commandIssuer = Context.Guild.GetUser(Context.User.Id);
+                if (campaignInfo.GameMasterId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+                    return GameMasterResult.ErrorResult("You do not have permission to remove a player from this campaign.");
                 // Check if player is actually not in the campaign
                 if (!campaignInfo.Players.Contains(guildUser.Username))
                     return GameMasterResult.ErrorResult("Player is not a member of this campaign.");

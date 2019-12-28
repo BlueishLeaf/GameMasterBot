@@ -32,7 +32,7 @@ namespace GameMasterBot.Utils
                     new EmbedFieldBuilder
                     {
                         Name = "Players",
-                        Value = string.Join(", ", campaign.Players),
+                        Value = campaign.Players != null && campaign.Players.Count > 0 ? string.Join(", ", campaign.Players) : "No players.",
                         IsInline = false
                     }
                 }
@@ -165,7 +165,7 @@ namespace GameMasterBot.Utils
                         new EmbedFieldBuilder
                         {
                             Name = "Players",
-                            Value = string.Join(", ", campaign.Players),
+                            Value = campaign.Players != null && campaign.Players.Count > 0 ? string.Join(", ", campaign.Players): "No players.",
                             IsInline = true
                         },
                         new EmbedFieldBuilder
