@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utils;
+using TimeZoneConverter;
+
 // ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
@@ -80,8 +82,7 @@ namespace GameMasterBot.Modules
             
             // Convert time to UTC using timezone role
             var tzId = tzRole.Name.Remove(0, 10);
-            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
-            if (tzInfo == null)
+            if (!TZConvert.TryGetTimeZoneInfo(tzId, out var tzInfo))
                 return GameMasterResult.ErrorResult("Timezone not found.");
 
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
@@ -163,8 +164,7 @@ namespace GameMasterBot.Modules
             
             // Convert time to UTC using timezone role
             var tzId = tzRole.Name.Remove(0, 10);
-            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
-            if (tzInfo == null)
+            if (!TZConvert.TryGetTimeZoneInfo(tzId, out var tzInfo))
                 return GameMasterResult.ErrorResult("Timezone not found.");
 
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
@@ -488,8 +488,7 @@ namespace GameMasterBot.Modules
             
             // Convert time to UTC using timezone role
             var tzId = tzRole.Name.Remove(0, 10);
-            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
-            if (tzInfo == null)
+            if (!TZConvert.TryGetTimeZoneInfo(tzId, out var tzInfo))
                 return GameMasterResult.ErrorResult("Timezone not found.");
 
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);

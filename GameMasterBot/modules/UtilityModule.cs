@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using GameMasterBot.Utils;
+using TimeZoneConverter;
 
 namespace GameMasterBot.modules
 {
@@ -17,8 +18,7 @@ namespace GameMasterBot.modules
             [Summary("The timezone.")] string tz)
         {
             // Search for timezone object
-            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tz);
-            if (tzInfo == null)
+            if (!TZConvert.TryGetTimeZoneInfo(tz, out var tzInfo))
                 return GameMasterResult.ErrorResult("Could not find timezone.");
             
             // Create timezone role if one does not exist
@@ -46,7 +46,6 @@ namespace GameMasterBot.modules
         [Summary("Displays all timezones compatible with this bot.")]
         public async Task<RuntimeResult> ShowTimezonesAsync()
         {
-            var timezones = TimeZoneInfo.GetSystemTimeZones();
             await ReplyAsync("View timezones compatible with `!timezone` here: https://github.com/BlueishLeaf/GameMasterBot/blob/master/TIMEZONES.md");
             return GameMasterResult.SuccessResult();
         }
@@ -68,8 +67,7 @@ namespace GameMasterBot.modules
                 return GameMasterResult.ErrorResult("Invalid date.");
             
             var tzId = tzRole.Name.Remove(0, 10);
-            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
-            if (tzInfo == null)
+            if (!TZConvert.TryGetTimeZoneInfo(tzId, out var tzInfo))
                 return GameMasterResult.ErrorResult("Timezone not found.");
 
             var localTime = TimeZoneInfo.ConvertTimeFromUtc(parsedTime, tzInfo);
