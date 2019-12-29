@@ -28,7 +28,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> AddAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time,
-            [Summary("The schedule type for the session.")] string campaign = "") // TODO: Seriously? be more consistent nerd.
+            [Summary("The schedule type for the session.")] string campaign = null)
         {
             #region Validation
 
@@ -48,7 +48,7 @@ namespace GameMasterBot.Modules
 
             string campaignId;
             ulong channelId;
-            if (campaign == "")
+            if (campaign == null)
             {
                 campaignId = Context.Channel.Name;
                 campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaignId.Replace('-', ' '));

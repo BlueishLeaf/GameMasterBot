@@ -38,7 +38,7 @@ namespace GameMasterBot.modules
             // Add the timezone role to the user
             await guildUser.AddRoleAsync(tzRole);
 
-            await ReplyAsync($"Successfully set the timezone of {guildUser.Username} to {tzInfo.Id}.");
+            await ReplyAsync($"Successfully set the timezone of {guildUser.Username} to {tzInfo.StandardName}.");
             return GameMasterResult.SuccessResult();
         }
         
