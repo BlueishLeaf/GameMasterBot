@@ -4,7 +4,7 @@ using Common.Interfaces.Entities.Core;
 using Discord;
 using Discord.Commands;
 
-namespace GameMasterBot.Utils
+namespace GameMasterBot.Utilities
 {
     public static class EmbedUtils
     {

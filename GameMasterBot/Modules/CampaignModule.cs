@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
-using GameMasterBot.Utils;
+using GameMasterBot.Utilities;
 
 namespace GameMasterBot.Modules
 {

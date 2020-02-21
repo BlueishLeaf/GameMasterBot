@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 
-namespace GameMasterBot.Utils
+namespace GameMasterBot.Utilities
 {
     public class RequireRoleAttribute: PreconditionAttribute
     {

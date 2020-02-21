@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Discord.Commands;
-using GameMasterBot.Utils;
+using GameMasterBot.Utilities;
+
 // ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.modules

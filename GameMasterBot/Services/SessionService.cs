@@ -7,7 +7,7 @@ using Common.Interfaces.DataAccess;
 using Common.Interfaces.Entities.Core;
 using Discord.WebSocket;
 using Entities.Core;
-using GameMasterBot.Utils;
+using GameMasterBot.Utilities;
 
 namespace GameMasterBot.Services
 {

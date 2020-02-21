@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameMasterBot.Utils
+namespace GameMasterBot.Utilities
 {
     public static class DateUtils
     {

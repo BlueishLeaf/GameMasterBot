@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using GameMasterBot.Services;
-using GameMasterBot.Utils;
+using GameMasterBot.Utilities;
 using TimeZoneConverter;
 
 // ReSharper disable UnusedMember.Global

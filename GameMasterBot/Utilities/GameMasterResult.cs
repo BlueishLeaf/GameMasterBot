@@ -1,6 +1,6 @@
 ﻿using Discord.Commands;
 
-namespace GameMasterBot.Utils
+namespace GameMasterBot.Utilities
 {
     public class GameMasterResult: RuntimeResult
     {
