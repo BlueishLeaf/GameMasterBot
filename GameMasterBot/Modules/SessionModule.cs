@@ -5,7 +5,7 @@ using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utilities;
 using TimeZoneConverter;
-
+// ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
@@ -28,7 +28,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> AddAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time,
-            [Summary("The schedule type for the session.")] string campaign = null)
+            [Summary("The schedule type for the session.")] string campaign = "")
         {
             #region Validation
 
@@ -48,7 +48,7 @@ namespace GameMasterBot.Modules
 
             string campaignId;
             ulong channelId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaignId.Replace('-', ' '));
@@ -94,7 +94,7 @@ namespace GameMasterBot.Modules
             try
             {
                 var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign, "AdHoc", utcTime).Result;
-                await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Added for {session.CampaignName}", session));
+                await ReplyAsync(embed: EmbedBuilder.SessionInfo($"Session Added for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -109,7 +109,7 @@ namespace GameMasterBot.Modules
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time,
             [Summary("The schedule type for the session.")] string schedule,
-            [Summary("The schedule type for the session.")] string campaign = null)
+            [Summary("The schedule type for the session.")] string campaign = "")
         {
             // TODO: Clean this up and reduce duplication
             #region Validation
@@ -200,7 +200,7 @@ namespace GameMasterBot.Modules
             try
             {
                 var session = _sessionService.Create(channelId, Context.Guild.Id, Context.Guild.Name, campaignId, campaign , schedule, utcTime).Result;
-                await ReplyAsync(embed: EmbedUtils.SessionInfo($"Session Scheduled for {session.CampaignName}", session));
+                await ReplyAsync(embed: EmbedBuilder.SessionInfo($"Session Scheduled for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -212,14 +212,14 @@ namespace GameMasterBot.Modules
         [Command("next"), Alias("closest")]
         [Summary("Get the next session for this campaign.")]
         public async Task<RuntimeResult> NextAsync(
-            [Summary("The name of the campaign.")] string campaign = null)
+            [Summary("The name of the campaign.")] string campaign = "")
         {
             #region Validation
 
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -244,7 +244,7 @@ namespace GameMasterBot.Modules
                 if (session == null)
                     return GameMasterResult.ErrorResult("This campaign does not exist or the next session for this campaign has not been scheduled yet.");
 
-                await ReplyAsync(embed: EmbedUtils.SessionInfo($"Next Session for {session.CampaignName}", session));
+                await ReplyAsync(embed: EmbedBuilder.SessionInfo($"Next Session for {session.CampaignName}", session));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -256,14 +256,14 @@ namespace GameMasterBot.Modules
         [Command("upcoming"), Alias("soon")]
         [Summary("Get all the upcoming sessions for this campaign.")]
         public async Task<RuntimeResult> UpcomingAsync(
-            [Summary("The name of the campaign.")] string campaign = null)
+            [Summary("The name of the campaign.")] string campaign = "")
         {
             #region Validation
 
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 campaign = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(campaignId.Replace('-', ' '));
@@ -290,7 +290,7 @@ namespace GameMasterBot.Modules
                 if (!sessions.Any())
                     return GameMasterResult.ErrorResult("This campaign does not exist or the next session for this campaign has not been scheduled yet.");
 
-                await ReplyAsync(embed: EmbedUtils.SessionList($"Upcoming Sessions for {campaign}", sessions));
+                await ReplyAsync(embed: EmbedBuilder.SessionList($"Upcoming Sessions for {campaign}", sessions));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -302,14 +302,14 @@ namespace GameMasterBot.Modules
         [Command("cancel next"), Alias("cancel upcoming")]
         [Summary("Cancels the next session for a campaign")]
         public async Task<RuntimeResult> CancelNextAsync(
-            [Summary("The campaign that the session belongs to.")] string campaign = null)
+            [Summary("The campaign that the session belongs to.")] string campaign = "")
         {
             #region Validation
 
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -350,7 +350,7 @@ namespace GameMasterBot.Modules
         [Summary("Cancels all sessions on a given date for a campaign")]
         public async Task<RuntimeResult> CancelDayAsync(
             [Summary("The date on which the session will take place.")] string date,
-            [Summary("The campaign that the session belongs to.")] string campaign = null)
+            [Summary("The campaign that the session belongs to.")] string campaign = "")
         {
             #region Validation
 
@@ -364,7 +364,7 @@ namespace GameMasterBot.Modules
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -406,7 +406,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelPeriodAsync(
             [Summary("The start of the date range.")] string after,
             [Summary("The end of the date range.")] string before,
-            [Summary("The campaign that the session belongs to.")] string campaign = null)
+            [Summary("The campaign that the session belongs to.")] string campaign = "")
         {
             #region Validation
 
@@ -423,7 +423,7 @@ namespace GameMasterBot.Modules
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -465,7 +465,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelDayTimeAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session wil take place.")] string time,
-            [Summary("The campaign that the session belongs to.")] string campaign = null)
+            [Summary("The campaign that the session belongs to.")] string campaign = "")
         {
             #region Validation
             
@@ -498,7 +498,7 @@ namespace GameMasterBot.Modules
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -540,7 +540,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelScheduleAsync(
             [Summary("The date on which the session will take place.")] string date,
             [Summary("The time at which the session will take place.")] string time,
-            [Summary("The campaign that the session belongs to.")] string campaign = null)
+            [Summary("The campaign that the session belongs to.")] string campaign = "")
         {
             #region Validation
 
@@ -554,7 +554,7 @@ namespace GameMasterBot.Modules
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);

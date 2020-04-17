@@ -8,8 +8,7 @@ namespace Common.Interfaces.DataAccess.Repositories
     {
         Task<ICampaign> Get(ulong serverId, string campaignId);
         IEnumerable<ICampaign> GetForServer(ulong serverId);
-        IEnumerable<ICampaign> GetForPlayer(ulong serverId, string playerName);
-        //Task<ICampaign> Update();
+
         void Add(ICampaign campaign);
         void Remove(ulong serverId, string campaignId);
     }

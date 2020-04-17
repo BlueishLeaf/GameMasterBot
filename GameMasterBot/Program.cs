@@ -22,9 +22,8 @@ namespace GameMasterBot
 
             await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
             await client.StartAsync();
-
+            
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
-            services.GetRequiredService<SessionService>().Initialize();
 
             await Task.Delay(-1);
         }
@@ -36,7 +35,7 @@ namespace GameMasterBot
             .AddSingleton<GameMasterContext>()
             .AddSingleton<IUnitOfWork, UnitOfWork>()
             .AddSingleton<CampaignService>()
-            .AddScoped<SessionService>()
+            .AddSingleton<SessionService>()
             .BuildServiceProvider();
 
         private static Task LogAsync(LogMessage msg)

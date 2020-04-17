@@ -5,6 +5,8 @@ using Discord;
 using Discord.Commands;
 using GameMasterBot.Utilities;
 using TimeZoneConverter;
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.modules
 {

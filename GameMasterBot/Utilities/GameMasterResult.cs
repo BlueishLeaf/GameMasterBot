@@ -8,6 +8,6 @@ namespace GameMasterBot.Utilities
 
         public static GameMasterResult ErrorResult(string reason) => new GameMasterResult(CommandError.Unsuccessful, reason);
 
-        public static GameMasterResult SuccessResult(string reason = null) => new GameMasterResult(null, reason);
+        public static GameMasterResult SuccessResult(string reason = "") => new GameMasterResult(null, reason);
     }
 }

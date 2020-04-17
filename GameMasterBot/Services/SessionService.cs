@@ -15,20 +15,17 @@ namespace GameMasterBot.Services
     {
         private readonly DiscordSocketClient _client;
         private readonly IUnitOfWork _unitOfWork;
-        private Timer _timer;
+        private readonly Timer _timer;
 
-        private const int InitialDelay = 10;
+        private const int InitialDelay = 15;
 
         public SessionService(DiscordSocketClient client, IUnitOfWork unitOfWork)
         {
             _client = client;
             _unitOfWork = unitOfWork;
+            _timer = new Timer(CheckSessions, null, TimeSpan.FromSeconds(InitialDelay), TimeSpan.FromSeconds(InitialDelay));
         }
-
-        public void Initialize() => SetTimer();
-
-        private void SetTimer() => _timer = new Timer(CheckSessions, null, TimeSpan.FromSeconds(InitialDelay), TimeSpan.FromSeconds(InitialDelay));
-
+        
         private async Task CreateNextIfNecessary(ISession session)
         {
             session.Date = session.Schedule switch
@@ -55,7 +52,7 @@ namespace GameMasterBot.Services
                 });
         }
 
-        private async void CheckSessions(object state)
+        private async void CheckSessions(object? state)
         {
             var sessions = _unitOfWork.Sessions.GetAllAfterDate(DateTime.UtcNow.AddMinutes(-35));
             foreach (var session in sessions)

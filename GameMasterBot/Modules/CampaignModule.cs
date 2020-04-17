@@ -7,6 +7,9 @@ using Discord;
 using Discord.Commands;
 using GameMasterBot.Services;
 using GameMasterBot.Utilities;
+using EmbedBuilder = GameMasterBot.Utilities.EmbedBuilder;
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
 {
@@ -159,7 +162,7 @@ namespace GameMasterBot.Modules
                 #endregion
 
                 // Send a rich text embed representing the new campaign
-                await ReplyAsync("Campaign created successfully!", embed: EmbedUtils.CampaignInfo(campaign));
+                await ReplyAsync("Campaign created successfully!", embed: EmbedBuilder.CampaignInfo(campaign));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -224,14 +227,14 @@ namespace GameMasterBot.Modules
         [Command("info"), Alias("details")]
         [Summary("Returns all information about the campaign specified.")]
         public async Task<RuntimeResult> InfoAsync(
-            [Summary("The name of the campaign.")] string campaign = null)
+            [Summary("The name of the campaign.")] string campaign = "")
         {
             #region Validation
 
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -254,7 +257,7 @@ namespace GameMasterBot.Modules
             {
                 var campaignInfo = await _campaignService.Get(Context.Guild.Id, campaignId);
                 var sessionInfo = _sessionService.GetUpcoming(Context.Guild.Id, campaignId);
-                await ReplyAsync(embed: EmbedUtils.CampaignSummary(campaignInfo, sessionInfo));
+                await ReplyAsync(embed: EmbedBuilder.CampaignSummary(campaignInfo, sessionInfo));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -267,7 +270,7 @@ namespace GameMasterBot.Modules
         [Summary("Adds a player to an existing campaign.")]
         public async Task<RuntimeResult> AddPlayerAsync(
             [Summary("The username of the player.")] string player,
-            [Summary("The name of the campaign.")] string campaign = null)
+            [Summary("The name of the campaign.")] string campaign = "")
         {
             #region Validation
             
@@ -284,7 +287,7 @@ namespace GameMasterBot.Modules
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -324,7 +327,7 @@ namespace GameMasterBot.Modules
                 if (campaignRole == null)
                     return GameMasterResult.ErrorResult("No player role exists for this campaign.");
                 await guildUser.AddRoleAsync(campaignRole);
-                await ReplyAsync($"Successfully added {guildUser.Username} as a player.", embed: EmbedUtils.CampaignInfo(newCampaignInfo));
+                await ReplyAsync($"Successfully added {guildUser.Username} as a player.", embed: EmbedBuilder.CampaignInfo(newCampaignInfo));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -337,7 +340,7 @@ namespace GameMasterBot.Modules
         [Summary("Removes a player from an existing campaign.")]
         public async Task<RuntimeResult> RemovePlayerAsync(
             [Summary("The username of the player.")] string player,
-            [Summary("The name of the campaign.")] string campaign = null)
+            [Summary("The name of the campaign.")] string campaign = "")
         {
             #region Validation
             
@@ -354,7 +357,7 @@ namespace GameMasterBot.Modules
             #region Campaign
 
             string campaignId;
-            if (campaign == null)
+            if (string.IsNullOrEmpty(campaign))
             {
                 campaignId = Context.Channel.Name;
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == campaignId);
@@ -391,7 +394,7 @@ namespace GameMasterBot.Modules
                 if (campaignRole == null)
                     return GameMasterResult.ErrorResult("No player role exists for this campaign.");
                 await guildUser.RemoveRoleAsync(campaignRole);
-                await ReplyAsync($"Successfully removed {guildUser.Username} from the campaign.", embed: EmbedUtils.CampaignInfo(newCampaignInfo));
+                await ReplyAsync($"Successfully removed {guildUser.Username} from the campaign.", embed: EmbedBuilder.CampaignInfo(newCampaignInfo));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -410,7 +413,7 @@ namespace GameMasterBot.Modules
                 foreach (var campaign in campaigns)
                 {
                     var sessions = _sessionService.GetUpcoming(Context.Guild.Id, campaign.Id);
-                    await ReplyAsync(embed: EmbedUtils.CampaignSummary(campaign, sessions));
+                    await ReplyAsync(embed: EmbedBuilder.CampaignSummary(campaign, sessions));
                 }
                 return GameMasterResult.SuccessResult();
             }
@@ -433,7 +436,7 @@ namespace GameMasterBot.Modules
                 foreach (var campaign in campaigns)
                 {
                     var sessions = _sessionService.GetUpcoming(Context.Guild.Id, campaign.Id);
-                    await guildUser.SendMessageAsync("I PMed you with your personal campaign details.", embed: EmbedUtils.CampaignSummary(campaign, sessions));
+                    await guildUser.SendMessageAsync("I PMed you with your personal campaign details.", embed: EmbedBuilder.CampaignSummary(campaign, sessions));
                 }
                 return GameMasterResult.SuccessResult();
             }

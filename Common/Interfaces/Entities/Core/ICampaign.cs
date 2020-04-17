@@ -4,15 +4,14 @@ namespace Common.Interfaces.Entities.Core
 {
     public interface ICampaign: IDynamoDbItem
     {
-        string Id { get; set; }
-        string Name { get; set; }
-        string GameMasterName { get; set; }
-        ulong GameMasterId { get; set; }
-        string CreatedBy { get; set; }
-        string System { get; set; }
-        string Url { get; set; }
-        string ServerName { get; set; }
-        ulong ServerId { get; set; }
+        string Id { get; }
+        string Name { get; }
+        string GameMasterName { get; }
+        ulong GameMasterId { get; }
+        string CreatedBy { get; }
+        string System { get; }
+        string Url { get; }
+        ulong ServerId { get; }
         List<string> Players { get; set; }
     }
 }

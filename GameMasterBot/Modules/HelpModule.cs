@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Discord.Commands;
 using GameMasterBot.Utilities;
-
+// ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.modules
@@ -18,7 +18,7 @@ namespace GameMasterBot.modules
         [Summary("Displays a list of all the commands for this bot.")]
         public async Task<RuntimeResult> HelpAsync()
         {
-            await ReplyAsync(embed: EmbedUtils.ModuleList(_service.Modules));
+            await ReplyAsync(embed: EmbedBuilder.ModuleList(_service.Modules));
             return GameMasterResult.SuccessResult();
         }
 
@@ -39,7 +39,7 @@ namespace GameMasterBot.modules
 
             #endregion
 
-            await ReplyAsync(embed: EmbedUtils.CommandList(searchResult.Commands));
+            await ReplyAsync(embed: EmbedBuilder.CommandList(searchResult.Commands));
             return GameMasterResult.SuccessResult();
         }
 
@@ -63,7 +63,7 @@ namespace GameMasterBot.modules
         [Summary("Displays a tutorial on how to use the bot.")]
         public async Task<RuntimeResult> OverviewAsync()
         {
-            await ReplyAsync(embed: EmbedUtils.Overview());
+            await ReplyAsync(embed: EmbedBuilder.Overview());
             return GameMasterResult.SuccessResult();
         }
     }

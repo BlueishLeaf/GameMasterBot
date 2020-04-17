@@ -26,14 +26,6 @@ namespace DataAccess.Repositories
                 new[] { "Campaign#" })
             .GetNextSetAsync().Result;
 
-        public IEnumerable<ICampaign> GetForPlayer(ulong serverId, string playerName) => Context
-            // TODO: Add filters
-            .QueryAsync<Campaign>(
-                $"Server#{serverId}",
-                QueryOperator.BeginsWith,
-                new[] { "Campaign#" })
-            .GetNextSetAsync().Result;
-
         public void Add(ICampaign campaign)
         {
             // Complete the campaign object

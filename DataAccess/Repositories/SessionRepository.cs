@@ -24,17 +24,6 @@ namespace DataAccess.Repositories
                     })
                 .GetNextSetAsync().Result;
 
-        public IEnumerable<ISession> GetAllForPeriod(DateTime after, DateTime before) =>
-            Context.QueryAsync<Session>(
-                    "Session",
-                    QueryOperator.Between,
-                    new[] {$"Session#{after:O}", $"Session#{before:O}"},
-                    new DynamoDBOperationConfig
-                    {
-                        IndexName = "Entity-Sk-Index"
-                    })
-                .GetNextSetAsync().Result;
-
         public IEnumerable<ISession> GetForCampaign(ulong serverId, string campaignId) =>
             Context.QueryAsync<Session>(
                     $"Campaign#{serverId}#{campaignId}",
@@ -56,11 +45,6 @@ namespace DataAccess.Repositories
                     new[] { $"Session#{after:O}", $"Session#{before:O}" })
                 .GetNextSetAsync().Result;
 
-        public IEnumerable<ISession> GetForPlayerAfterDate(string playerId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task Add(ISession session)
         {
             session.Pk = $"Campaign#{session.ServerId}#{session.CampaignId}";
@@ -77,7 +61,7 @@ namespace DataAccess.Repositories
         public async Task RemoveRange(IEnumerable<ISession> sessions)
         {
             var batch = Context.CreateBatchWrite<Session>();
-            foreach (var session in sessions) batch.AddDeleteItem(session as Session);
+            foreach (var session in sessions) batch.AddDeleteItem((Session) session);
             await batch.ExecuteAsync();
         }
     }

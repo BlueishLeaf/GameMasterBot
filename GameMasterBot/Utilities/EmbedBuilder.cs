@@ -6,11 +6,11 @@ using Discord.Commands;
 
 namespace GameMasterBot.Utilities
 {
-    public static class EmbedUtils
+    public static class EmbedBuilder
     {
         private const string IconUrl = "https://cdn.discordapp.com/avatars/597026097166680065/5fd03a7d9efa4f8cca8395e5555f4879.png?size=32";
         public static Embed CampaignInfo(ICampaign campaign) =>
-            new EmbedBuilder
+            new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
                 Color = Color.Purple,
@@ -39,7 +39,7 @@ namespace GameMasterBot.Utilities
             }.Build();
         
         public static Embed Overview() =>
-            new EmbedBuilder
+            new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("How to use Game Master Bot").WithIconUrl(IconUrl),
                 Description = "**Note:** Before continuing with this bot, ensure that a role called 'Whitelisted' exists on the server. A user requires this role in order to create a campaign.",
@@ -68,7 +68,7 @@ namespace GameMasterBot.Utilities
             }.Build();
 
         public static Embed SessionInfo(string title, ISession session) =>
-            new EmbedBuilder
+            new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
                 Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
@@ -99,14 +99,14 @@ namespace GameMasterBot.Utilities
         public static Embed SessionList(string title, IEnumerable<ISession> sessions)
         {
             sessions = sessions.ToList();
-            string dates = null, times = null, schedules = null;
+            string dates = "", times = "", schedules = "";
             foreach (var session in sessions)
             {
                 dates += session.Date.ToShortDateString() + "\n";
                 times += session.Date.ToString("HH:mm") + "\n";
                 schedules += session.Schedule + "\n";
             }
-            return new EmbedBuilder
+            return new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
                 Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
@@ -140,7 +140,7 @@ namespace GameMasterBot.Utilities
         {
             sessions = sessions.ToList();
             if (!sessions.Any())
-                return new EmbedBuilder
+                return new Discord.EmbedBuilder
                 {
                     Author =
                         new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
@@ -176,14 +176,14 @@ namespace GameMasterBot.Utilities
                         }
                     }
                 }.Build();
-            string dates = null, times = null, schedules = null;
+            string dates = "", times = "", schedules = "";
             foreach (var session in sessions)
             {
                 dates += session.Date.ToShortDateString() + "\n";
                 times += session.Date.ToString("HH:mm") + "\n";
                 schedules += session.Schedule + "\n";
             }
-            return new EmbedBuilder
+            return new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl),
                 Description =
@@ -239,7 +239,7 @@ namespace GameMasterBot.Utilities
         }
 
         public static Embed CommandList(IEnumerable<CommandMatch> commands) =>
-            new EmbedBuilder
+            new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("Commands Matching your Search").WithIconUrl(IconUrl),
                 Description = "For a list of all commands, use the `!help` command.",
@@ -248,7 +248,7 @@ namespace GameMasterBot.Utilities
             }.Build();
 
         public static Embed ModuleList(IEnumerable<ModuleInfo> modules) =>
-            new EmbedBuilder
+            new Discord.EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("All Commands").WithIconUrl(IconUrl),
                 Description = "For help with a specific command, use the `!help 'command'` command.",
@@ -264,34 +264,7 @@ namespace GameMasterBot.Utilities
             }).ToList();
 
         private static List<EmbedFieldBuilder> BuildFieldsForModules(IEnumerable<ModuleInfo> modules) =>
-            (from module in modules let description = module.Commands.Aggregate<CommandInfo, string>(null, (current, command) => current + $"`{command.Name}` - {command.Summary}\n")
+            (from module in modules let description = module.Commands.Aggregate("", (current, command) => current + $"`{command.Name}` - {command.Summary}\n")
             select new EmbedFieldBuilder {Name = module.Group != null ? $"{module.Name} Commands - `!{module.Group} 'command'`": $"{module.Name} Commands", Value = description, IsInline = false}).ToList();
-
-        private static List<EmbedFieldBuilder> BuildFieldsForCampaigns(IEnumerable<ICampaign> campaigns)
-        {
-            var builders = new List<EmbedFieldBuilder>();
-            foreach (var campaign in campaigns)
-            {
-                builders.Add(new EmbedFieldBuilder
-                {
-                    Name = "Campaign",
-                    Value = campaign.Name,
-                    IsInline = true
-                });
-                builders.Add(new EmbedFieldBuilder
-                {
-                    Name = "System",
-                    Value = campaign.System,
-                    IsInline = true
-                });
-                builders.Add(new EmbedFieldBuilder
-                {
-                    Name = "Game Master",
-                    Value = campaign.GameMasterName,
-                    IsInline = true
-                });
-            }
-            return builders;
-        }
     }
 }
