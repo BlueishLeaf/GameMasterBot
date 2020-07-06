@@ -33,7 +33,7 @@ namespace GameMasterBot.Modules
             [Summary("The name of the campaign.")] string name,
             [Summary("The game system the campaign will use.")] string system,
             [Summary("The username of the game master.")] string gameMaster,
-            [Summary("The Roll20 url for the campaign.")] string url,
+            [Summary("The url for the campaign.")] string url,
             [Summary("The campaign's players, separated by a space.")] params string[] players)
         {
             #region Validation
@@ -313,8 +313,7 @@ namespace GameMasterBot.Modules
                 if (campaignInfo.GameMasterId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                     return GameMasterResult.ErrorResult("You do not have permission to remove this campaign.");
                 // If there are no players, instantiate the list
-                if (campaignInfo.Players == null)
-                    campaignInfo.Players = new List<string>();
+                campaignInfo.Players ??= new List<string>();
                 // Check if player is already in the campaign
                 if (campaignInfo.Players.Contains(guildUser.Username))
                     return GameMasterResult.ErrorResult("Player is already a member of this campaign.");

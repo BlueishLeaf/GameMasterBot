@@ -43,19 +43,19 @@ namespace GameMasterBot.modules
             return GameMasterResult.SuccessResult();
         }
 
-        [Command("version"), Alias("v")]
-        [Summary("Displays this bot's version number.")]
-        public async Task<RuntimeResult> VersionAsync()
+        [Command("project"), Alias("issues", "roadmap")]
+        [Summary("Displays a link to the kanban board for this bot.")]
+        public async Task<RuntimeResult> ProjectAsync()
         {
-            await ReplyAsync("GameMasterBot v1.0.0");
+            await ReplyAsync("You can check the roadmap and source code at: https://github.com/BlueishLeaf/GameMasterBot/projects/1");
             return GameMasterResult.SuccessResult();
         }
-
-        [Command("roadmap"), Alias("repo", "repository", "issues")]
-        [Summary("Displays a link to the repository of this bot.")]
-        public async Task<RuntimeResult> RoadmapAsync()
+        
+        [Command("repository"), Alias("repo", "code")]
+        [Summary("Displays a link to the GitHub repository for this bot.")]
+        public async Task<RuntimeResult> RepositoryAsync()
         {
-            await ReplyAsync("You can check the roadmap and source code at: https://github.com/BlueishLeaf/GameMasterBot");
+            await ReplyAsync("You can check out the source code at: https://github.com/BlueishLeaf/GameMasterBot");
             return GameMasterResult.SuccessResult();
         }
         
