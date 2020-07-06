@@ -6,12 +6,7 @@ such as creating text and voice channels, creating and assigning roles,
 and scheduling or cancelling sessions without having to worry about timezone issues.
 
 ## Roadmap/TODO
-- Refactor some of the code to reduce duplication.
-- Improve the usability of certain long-winded commands after getting feedback.
-- Test the system under heavy stress.
-- Provide a CloudFormations template to automate the AWS infrastructure required to build the bot.
-- Create a wiki to easily document the commands in a more user friendly way.
-- Create a web dashboard for finer control over the bot.
+Check out the roadmap [here](https://github.com/BlueishLeaf/GameMasterBot/projects/1)!
 
 ## How to Build and Run
 - Install .Net Core 3.1
