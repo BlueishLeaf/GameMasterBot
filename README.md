@@ -1,4 +1,4 @@
-# GameMasterBot v1.0.0
+# GameMasterBot - A TRPG management bot for Discord
 ## Overview
 GameMasterBot is a discord bot for managing TRPG campaigns.
 With it, you can easily automate the tasks associated with creating a campaign,
@@ -8,13 +8,8 @@ and scheduling or cancelling sessions without having to worry about timezone iss
 ## Roadmap/TODO
 Check out the roadmap [here](https://github.com/BlueishLeaf/GameMasterBot/projects/1)!
 
-## How to Build and Run
+## How to build and run locally
 - Install .Net Core 3.1
-- Set the following environmental variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS, and DISCORD_TOKEN.
-- Create a DynamoDb table with the specifications as below.
-
-### DynamoDb Table
-- Name the table "GameMasterBotTbl".
-- Set "Pk" as the partition key and "Sk" as the sort key.
-- Create a global secondary index called "Entity-Sk-Index", which has "Entity" as its partition key, and "Sk" as its sort key.
-- Enable TTL on the "Expiry" attribute.
+- Set the DISCORD_TOKEN environmental variable. This is the secret that you get from the Discord developers portal.
+- Set the environmental variables needed to build the mariaDB connection string: DB_USER, DB_PASSWORD, DB_HOST and DB_NAME.
+- Update the database with 'dotnet ef database update'.

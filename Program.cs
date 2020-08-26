@@ -5,6 +5,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using GameMasterBot.Data;
 using GameMasterBot.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GameMasterBot
@@ -23,6 +24,7 @@ namespace GameMasterBot
             await client.StartAsync();
             
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
+            await services.GetRequiredService<GameMasterContext>().Database.MigrateAsync();
 
             await Task.Delay(-1);
         }
