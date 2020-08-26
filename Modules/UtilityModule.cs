@@ -41,7 +41,7 @@ namespace GameMasterBot.Modules
 
             await _userService.UpdateTimezone(Context.User, tzInfo.Id);
 
-            await ReplyAsync($"Successfully set your timezone.");
+            await ReplyAsync($"Successfully set your timezone to {tzInfo.StandardName}.");
             return GameMasterResult.SuccessResult();
         }
         
