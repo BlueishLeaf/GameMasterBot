@@ -1,5 +1,4 @@
-﻿using System;
-using GameMasterBot.Models.Entities;
+﻿using GameMasterBot.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameMasterBot.Data
@@ -12,11 +11,13 @@ namespace GameMasterBot.Data
         public DbSet<Session> Sessions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options) =>
-            options.UseMySql($"server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-                             $"database={Environment.GetEnvironmentVariable("DB_NAME")};" +
-                             $"user={Environment.GetEnvironmentVariable("DB_USER")};" +
-                             $"password={Environment.GetEnvironmentVariable("DB_PASSWORD")}")
-                .UseLazyLoadingProxies();
+            options.UseSqlite($"Data Source=GameMaster.db").UseLazyLoadingProxies();
+            // Wanted to use a hosted MariaDB instance but i'm poor lol.
+            // options.UseMySql($"server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+            //                  $"database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+            //                  $"user={Environment.GetEnvironmentVariable("DB_USER")};" +
+            //                  $"password={Environment.GetEnvironmentVariable("DB_PASSWORD")}")
+            //     .UseLazyLoadingProxies();
         
         protected override void OnModelCreating(ModelBuilder builder)
         {
