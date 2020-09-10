@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
@@ -37,7 +38,7 @@ namespace GameMasterBot.Modules
             if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to add a session to this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
-            if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
+            if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy hh:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 return GameMasterResult.ErrorResult("you entered an invalid date.");
 
             var user = await _userService.GetByDiscordUser(Context.User);
@@ -78,7 +79,7 @@ namespace GameMasterBot.Modules
             if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to schedule a session for this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
-            if (!DateTime.TryParse($"{date} {time}", out var parsedDate))
+            if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy hh:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 return GameMasterResult.ErrorResult("you entered an invalid date.");
 
             var user = await _userService.GetByDiscordUser(Context.User);
@@ -188,7 +189,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelScheduleAsync(
             [Summary("The date on which the session will take place.")] string date)
         {
-            if (!DateTime.TryParse(date, out var parsedDate))
+            if (!DateTime.TryParseExact(date, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 return GameMasterResult.ErrorResult("the date you entered was invalid.");
 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
@@ -215,7 +216,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelDateAsync(
             [Summary("The date on which the session will take place.")] string date)
         {
-            if (!DateTime.TryParse(date, out var parsedDate))
+            if (!DateTime.TryParseExact(date, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 return GameMasterResult.ErrorResult("the date you entered was invalid.");
 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);

@@ -46,24 +46,24 @@ namespace GameMasterBot.Services
         }
     }
     
-    private async void CheckSessions(object state)
+    private async void CheckSessions(object? state)
     {
-        var sessions = await _context.Sessions.Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-35)).ToListAsync();
+        var sessions = await _context.Sessions.AsQueryable().Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-35)).ToListAsync();
         foreach (var session in sessions)
         {
             var timeDiff = (session.Timestamp - DateTime.UtcNow).TotalMinutes;
-            if (!(timeDiff <= 30) || session.ReminderSent && session.Activated) continue;
+            if (!(timeDiff <= 30) || session.State == SessionState.Archived) continue;
             var channelToNotify = (SocketTextChannel)_client.GetChannel(session.Campaign.TextChannelId);
-            if (timeDiff <= 0 && !session.Activated)
+            if (timeDiff <= 0 && session.State == SessionState.Confirmed)
             {
                 await channelToNotify.SendMessageAsync("@here Attention! Today's session is about to begin!");
-                session.Activated = true;
+                session.State = SessionState.Archived;
                 await CreateNextIfNecessary(session);
             }
-            else if (!session.ReminderSent)
+            else if (session.State == SessionState.Scheduled)
             {
                 await channelToNotify.SendMessageAsync("@here Attention! Today's session will begin in ~30 minutes!");
-                session.ReminderSent = true;
+                session.State = SessionState.Confirmed;
             }
             _context.Sessions.Update(session);
             await _context.SaveChangesAsync();
@@ -73,11 +73,11 @@ namespace GameMasterBot.Services
     
     private void SetTimerDelay(IReadOnlyCollection<Session> sessions)
     {
-        if (sessions.FirstOrDefault(s => !s.Activated) == null) _timer.Change(Timeout.Infinite, Timeout.Infinite);
+        if (sessions.FirstOrDefault(s => s.State != SessionState.Archived) == null) _timer.Change(Timeout.Infinite, Timeout.Infinite);
         else
         {
-            var nextSession = sessions.OrderBy(s => s.Timestamp).First(session => !session.Activated);
-            var nextTime = !nextSession.ReminderSent
+            var nextSession = sessions.OrderBy(s => s.Timestamp).First(session => session.State != SessionState.Archived);
+            var nextTime = nextSession.State == SessionState.Scheduled
                 ? nextSession.Timestamp.Subtract(DateTime.UtcNow).TotalSeconds - 1800
                 : nextSession.Timestamp.Subtract(DateTime.UtcNow).TotalSeconds;
             if (nextTime < 0) nextTime = 0;
@@ -87,7 +87,7 @@ namespace GameMasterBot.Services
     }
 
     private async Task RefreshTimerData() => 
-        SetTimerDelay(await _context.Sessions.Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-35)).ToListAsync());
+        SetTimerDelay(await _context.Sessions.AsQueryable().Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-35)).ToListAsync());
 
     public async Task<Session> Create(ulong campaignId, Schedule schedule, DateTime timestamp)
     {
@@ -104,9 +104,9 @@ namespace GameMasterBot.Services
         
     public async Task CancelNext(ulong campaignId)
     {
-        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Timestamp >= DateTime.UtcNow && !s.Activated && s.CampaignId == campaignId);
+        var session = await _context.Sessions.AsQueryable().FirstOrDefaultAsync(s => s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived && s.CampaignId == campaignId);
         if (session == null) throw new Exception("no sessions found for this campaign.");
-        session.Activated = true;
+        session.State = SessionState.Archived;
         _context.Sessions.Update(session);
         await _context.SaveChangesAsync();
         await CreateNextIfNecessary(session);
@@ -115,9 +115,9 @@ namespace GameMasterBot.Services
     
     public async Task CancelForDate(ulong campaignId, DateTime date)
     {
-        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Timestamp >= date && s.Timestamp < date.AddDays(1) && !s.Activated && s.CampaignId == campaignId);
+        var session = await _context.Sessions.AsQueryable().FirstOrDefaultAsync(s => s.Timestamp >= date && s.Timestamp < date.AddDays(1) && s.State != SessionState.Archived && s.CampaignId == campaignId);
         if (session == null) throw new Exception("no sessions are scheduled on that date for this campaign.");
-        session.Activated = true;
+        session.State = SessionState.Archived;
         _context.Sessions.Update(session);
         await _context.SaveChangesAsync();
         await CreateNextIfNecessary(session);
@@ -126,15 +126,15 @@ namespace GameMasterBot.Services
     
     public async Task CancelScheduleForDate(ulong campaignId, DateTime date)
     {
-        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Timestamp >= date && s.Timestamp < date.AddDays(1) && !s.Activated && s.CampaignId == campaignId);
+        var session = await _context.Sessions.AsQueryable().FirstOrDefaultAsync(s => s.Timestamp >= date && s.Timestamp < date.AddDays(1) && s.State != SessionState.Archived && s.CampaignId == campaignId);
         if (session == null) throw new Exception("no sessions are scheduled for this campaign.");
-        session.Activated = true;
+        session.State = SessionState.Archived;
         _context.Sessions.Update(session);
         await _context.SaveChangesAsync();
         await RefreshTimerData();
     }
     
     public async Task<List<Session>> GetUpcoming(ulong campaignId) =>
-        await _context.Sessions.Where(s => s.CampaignId == campaignId && s.Timestamp >= DateTime.Now && !s.Activated).ToListAsync();
+        await _context.Sessions.AsQueryable().Where(s => s.CampaignId == campaignId && s.Timestamp >= DateTime.Now && s.State != SessionState.Archived).ToListAsync();
     }
 }

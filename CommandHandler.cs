@@ -5,6 +5,8 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using GameMasterBot.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace GameMasterBot
 {
@@ -13,6 +15,7 @@ namespace GameMasterBot
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
+        private readonly ILogger _logger;
 
         // Retrieve client and CommandService instance via ctor
         public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider services)
@@ -20,6 +23,7 @@ namespace GameMasterBot
             _client = client;
             _commands = commands;
             _services = services;
+            _logger = services.GetRequiredService<ILogger<CommandHandler>>();
 
             // Handle outcome of commands
             _commands.CommandExecuted += CommandExecutedAsync;
@@ -50,10 +54,14 @@ namespace GameMasterBot
             await _commands.ExecuteAsync(context, argPos, _services);
         }
 
-        private static async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
+        private async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
             // The command was successful, we don't care about this result, unless we want to log that a command succeeded.
-            if (result.IsSuccess) return;
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation($"Command [{command.Value.Name}] executed for [{context.User.Username}] on [{context.Guild.Name}] in [{context.Channel.Name}]");
+                return;
+            }
 
             // The command failed, so we notify the user that something happened.
             switch (result.Error)
@@ -62,9 +70,10 @@ namespace GameMasterBot
                     if (result is GameMasterResult gameMasterResult) await context.Channel.SendMessageAsync($"I couldn't process your command because {gameMasterResult.Reason}");
                     else await context.Channel.SendMessageAsync("I couldn't process your command. Try again, and if the error persists then log a bug with '!bug'.");
                     break;
-                case CommandError.UnknownCommand:
-                    await context.Channel.SendMessageAsync("I don't know that command. Take a look at the command list using '!help'.");
-                    break;
+                // Removed for now as it was clashing with other popular bots like Rhythm
+                // case CommandError.UnknownCommand:
+                //     await context.Channel.SendMessageAsync("I don't know that command. Take a look at the command list using '!help'.");
+                //     break;
                 case CommandError.UnmetPrecondition:
                     // TODO: Show the preconditions that were not met
                     // var errors = command.Value.Preconditions.Aggregate("You are not authorized to use this command. ", (current, precondition) => current + $"{precondition.ErrorMessage} ");

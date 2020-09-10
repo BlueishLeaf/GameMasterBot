@@ -3,6 +3,7 @@ using System.Linq;
 using Discord;
 using Discord.Commands;
 using GameMasterBot.Models.Entities;
+using GameMasterBot.Models.Enums;
 
 namespace GameMasterBot.Embeds
 {
@@ -125,7 +126,7 @@ namespace GameMasterBot.Embeds
         // TODO: Tidy up boi
         public static Embed CampaignSummary(Campaign campaign)
         {
-            var sessions = campaign.Sessions.Where(s => !s.Activated).ToList();
+            var sessions = campaign.Sessions.Where(s => s.State != SessionState.Archived).ToList();
             if (!sessions.Any())
                 return new Discord.EmbedBuilder
                 {

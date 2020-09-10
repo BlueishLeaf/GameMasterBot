@@ -30,12 +30,14 @@ namespace GameMasterBot.Data.Migrations
                         .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<ulong>("PlayerRoleId")
                         .HasColumnType("bigint unsigned");
 
                     b.Property<string>("System")
+                        .IsRequired()
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<ulong>("TextChannelId")
@@ -80,6 +82,7 @@ namespace GameMasterBot.Data.Migrations
                         .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.HasKey("Id");
@@ -108,16 +111,13 @@ namespace GameMasterBot.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint unsigned");
 
-                    b.Property<bool>("Activated")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<ulong>("CampaignId")
                         .HasColumnType("bigint unsigned");
 
-                    b.Property<bool>("ReminderSent")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<int>("Schedule")
+                        .HasColumnType("int");
+
+                    b.Property<int>("State")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Timestamp")
@@ -141,6 +141,7 @@ namespace GameMasterBot.Data.Migrations
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.HasKey("Id");
@@ -151,7 +152,7 @@ namespace GameMasterBot.Data.Migrations
             modelBuilder.Entity("GameMasterBot.Models.Entities.Campaign", b =>
                 {
                     b.HasOne("GameMasterBot.Models.Entities.Guild", "Guild")
-                        .WithMany()
+                        .WithMany("Campaigns")
                         .HasForeignKey("GuildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

@@ -7,6 +7,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using GameMasterBot.Extensions;
+using GameMasterBot.Models.Entities;
 using GameMasterBot.Services;
 using EmbedBuilder = GameMasterBot.Embeds.EmbedBuilder;
 
@@ -24,25 +25,30 @@ namespace GameMasterBot.Modules
         [Command("add", RunMode = RunMode.Async), Alias("create")]
         [Summary("Creates a new campaign on this server, including channels and roles.")]
         public async Task<RuntimeResult> AddAsync(
-            [Summary("The name of the campaign (Enclose in quotes if it has spaces).")] string name,
-            [Summary("The game system the campaign will use (Enclose in quotes if it has spaces).")] string system)
+            [Summary("The name of the campaign.")] string name,
+            [Summary("The game system the campaign will use.")] string system)
         {
             var channelRegex = new Regex("^[a-zA-Z0-9 ]*$");
             const int channelMaxChars = 100;
+            const int channelMinChars = 1;
             
             if (name.Length > channelMaxChars)
-                return GameMasterResult.ErrorResult("the name of the campaign must be between 1 and 100 characters.");
+                return GameMasterResult.ErrorResult($"the name of the campaign must be between {channelMinChars} and {channelMaxChars} characters.");
             
             if (!channelRegex.IsMatch(name))
                 return GameMasterResult.ErrorResult("the name of the campaign must only contain alphanumeric characters and spaces.");
             
             if (system.Length > channelMaxChars)
-                return GameMasterResult.ErrorResult("the name of the campaign's system must be less than 100 characters long.");
+                return GameMasterResult.ErrorResult($"the name of the campaign's system must be less than {channelMaxChars} characters long.");
             if (!channelRegex.IsMatch(name))
                 return GameMasterResult.ErrorResult("the name of the campaign's system must only contain alphanumeric characters and spaces.");
 
             try
             {
+                var textChannelName = name.ToLower().Replace(' ', '-');
+                var campaignExisting = (await _campaignService.GetForServer(Context.Guild.Id)).FirstOrDefault(c => c.Name == name);
+                if (campaignExisting != null) return GameMasterResult.ErrorResult("a campaign with this name already exists on this server!");
+                
                 var message = await ReplyAsync("Creating campaign channels and roles...");
                 
                 Color roleColor;
@@ -57,19 +63,17 @@ namespace GameMasterBot.Modules
                     5 => Color.Teal,
                     _ => Color.Default
                 };
-        
                 var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Player: {name}") ??
-                                 (IRole)Context.Guild.CreateRoleAsync($"Player: {name}", null, roleColor).Result;
+                                 (IRole)Context.Guild.CreateRoleAsync($"Player: {name}", null, roleColor, false, null).Result;
         
                 var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Game Master: {name}") ??
-                                 (IRole)Context.Guild.CreateRoleAsync($"Game Master: {name}", null, roleColor).Result;
+                                 (IRole)Context.Guild.CreateRoleAsync($"Game Master: {name}", null, roleColor, false, null).Result;
         
                 // Create the category channel for this campaign's system if one does not already exist
                 var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == system) ??
                                                   (ICategoryChannel)Context.Guild.CreateCategoryChannelAsync(system).Result;
         
                 // Create the text channel for this campaign if one does not exist
-                var textChannelName = name.ToLower().Replace(' ', '-');
                 var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == textChannelName) ??
                                           (ITextChannel)Context.Guild.CreateTextChannelAsync(textChannelName, channel =>
                                           {
@@ -99,7 +103,7 @@ namespace GameMasterBot.Modules
 
                 await message.ModifyAsync(m =>
                 {
-                    m.Content = "Campaign created successfully!";
+                    m.Content = $"Campaign created successfully! Your next step should be to head over to <#{campaignTextChannel.Id}> and add players with '!campaign add-players'.";
                     m.Embed = EmbedBuilder.CampaignInfo(campaign);
                 });
                 return GameMasterResult.SuccessResult();
@@ -111,11 +115,12 @@ namespace GameMasterBot.Modules
         }
         
         [RequireRole("Whitelisted")]
-        [Command("add-players")]
+        [Command("add-players"), Alias("add-player")]
         [Summary("Adds one or more players to this campaign.")]
         public async Task<RuntimeResult> AddPlayersAsync(
             [Summary("The usernames/nicknames of the players in this server that you want to add.")] params string[] names)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             var guildUsers = new List<SocketGuildUser>();
             foreach (var name in names)
             {
@@ -124,33 +129,50 @@ namespace GameMasterBot.Modules
                     string.Equals(user.Nickname, name, StringComparison.CurrentCultureIgnoreCase));
                 if (guildUser == null)
                     await ReplyAsync($"I couldn't find a user by the name of '{name}' in this server, so I'll skip them.");
+                else if (guildUser.Id == campaign.UserId) 
+                    await ReplyAsync($"'{guildUser.Username}' is the Game Master for this campaign, so I'll skip them.");
                 else
                     guildUsers.Add(guildUser);
             }
             try
             {
-                var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
                 var commandIssuer = Context.Guild.GetUser(Context.User.Id);
                 if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                     return GameMasterResult.ErrorResult("you do not have permission to add players to this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
                 var playersToAdd = new List<SocketGuildUser>();
                 foreach (var guildUser in guildUsers)
                 {
-                    if (campaign.CampaignUsers.FirstOrDefault(cu => cu.UserId == guildUser.Id) != null)
+                    var foundPlayer = campaign.CampaignUsers.FirstOrDefault(cu => cu.UserId == guildUser.Id);
+                    if (foundPlayer != null)
                         await ReplyAsync($"'{guildUser.Username}' is already a player in this campaign, so I'll skip them.");
                     else
+                    {
                         playersToAdd.Add(guildUser);
+                        // campaign.CampaignUsers.Add(new CampaignUser
+                        // {
+                        //     CampaignId = campaign.Id,
+                        //     User = new User
+                        //     {
+                        //         Id = guildUser.Id,
+                        //         Username = guildUser.Username
+                        //     }
+                        // });
+                    }
                 }
 
+                //campaign = await _campaignService.Update(campaign);
                 campaign = await _campaignService.AddPlayers(campaign.Id, playersToAdd);
                 
                 var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
                 if (campaignRole == null)
                     return GameMasterResult.ErrorResult("no player role exists for this campaign.");
-
+                
                 foreach (var newPlayer in playersToAdd) await newPlayer.AddRoleAsync(campaignRole);
 
-                await ReplyAsync("Successfully added new players to this campaign.", embed: EmbedBuilder.CampaignInfo(campaign));
+                var message = playersToAdd.Any() ? 
+                    $"Successfully added {playersToAdd.Count} new player(s) to this campaign."
+                    : "No new players were added to this campaign.";
+                await ReplyAsync(message, embed: EmbedBuilder.CampaignInfo(campaign));
                 return GameMasterResult.SuccessResult();
             }
             catch (Exception e)
@@ -160,7 +182,7 @@ namespace GameMasterBot.Modules
         }
         
         [RequireRole("Whitelisted")]
-        [Command("remove-players")]
+        [Command("remove-players"), Alias("remove-player")]
         [Summary("Removes one or more players from this campaign.")]
         public async Task<RuntimeResult> RemovePlayersAsync(
             [Summary("The usernames/nicknames of the players in this campaign that you want to remove.")] params string[] names)
@@ -218,8 +240,46 @@ namespace GameMasterBot.Modules
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
                 return GameMasterResult.ErrorResult("the URL you entered is not valid.");
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            campaign = await _campaignService.UpdateUrl(campaign.Id, url);
-            await ReplyAsync("Successfully set the URL of this campaign.", embed: EmbedBuilder.CampaignInfo(campaign));
+            campaign.Url = url;
+            campaign = await _campaignService.Update(campaign);
+            await ReplyAsync("Successfully set the URL for this campaign.", embed: EmbedBuilder.CampaignInfo(campaign));
+            return GameMasterResult.SuccessResult();
+        }
+
+        [RequireRole("Whitelisted")]
+        [Command("set-gamemaster", RunMode = RunMode.Async), Alias("set-gm")]
+        [Summary("Set the game URL of this campaign.")]
+        public async Task<RuntimeResult> SetGameMasterAsync(
+            [Summary("The newly designated Game Master.")] string gameMaster)
+        {
+            var guildUser = Context.Guild.Users.FirstOrDefault(user =>
+                string.Equals(user.Username, gameMaster, StringComparison.CurrentCultureIgnoreCase) ||
+                string.Equals(user.Nickname, gameMaster, StringComparison.CurrentCultureIgnoreCase));
+            if (guildUser == null) return GameMasterResult.ErrorResult($"I couldn't find a user by the name of '{gameMaster}' in this server.");
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
+            if (gmRole == null) return GameMasterResult.ErrorResult("I couldn't find the Game Master role for this campaign in this server. You can regenerate the roles for this campaign using the '!campaign regenerate-roles' command.'");
+            if (campaign.UserId == guildUser.Id) return GameMasterResult.ErrorResult($"'{gameMaster}' is already the Game Master for this campaign!");
+            var currentGmDiscord = Context.Guild.GetUser(campaign.UserId);
+            if (currentGmDiscord != null) await currentGmDiscord.RemoveRoleAsync(gmRole);
+            var player= campaign.CampaignUsers.SingleOrDefault(cu => cu.UserId == guildUser.Id);
+            if (player != null)
+            {
+                var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
+                if (playerRole == null) return GameMasterResult.ErrorResult("I couldn't find the Player role for this campaign in this server. You can regenerate the roles for this campaign using the '!campaign regenerate-roles' command.'");
+                await guildUser.RemoveRoleAsync(playerRole);
+                await guildUser.AddRoleAsync(gmRole);
+                campaign.CampaignUsers.Remove(player);
+            }
+            else await guildUser.AddRoleAsync(gmRole);
+            campaign.UserId = guildUser.Id;
+            campaign.User = new User
+            {
+                Id = guildUser.Id,
+                Username = guildUser.Username
+            };
+            campaign = await _campaignService.Update(campaign);
+            await ReplyAsync($"Successfully set {guildUser.Username} as the Game Master for this campaign.", embed: EmbedBuilder.CampaignInfo(campaign));
             return GameMasterResult.SuccessResult();
         }
         

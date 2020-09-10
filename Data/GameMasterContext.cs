@@ -1,23 +1,23 @@
-﻿using GameMasterBot.Models.Entities;
+﻿using System;
+using GameMasterBot.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameMasterBot.Data
 {
     public class GameMasterContext : DbContext
     {
-        public DbSet<Guild> Guilds { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Campaign> Campaigns { get; set; }
-        public DbSet<Session> Sessions { get; set; }
+        public DbSet<Guild> Guilds => Set<Guild>();
+        public DbSet<User> Users => Set<User>();
+        public DbSet<Campaign> Campaigns => Set<Campaign>();
+        public DbSet<Session> Sessions => Set<Session>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder options) =>
-            options.UseSqlite($"Data Source=GameMaster.db").UseLazyLoadingProxies();
-            // Wanted to use a hosted MariaDB instance but i'm poor lol.
-            // options.UseMySql($"server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-            //                  $"database={Environment.GetEnvironmentVariable("DB_NAME")};" +
-            //                  $"user={Environment.GetEnvironmentVariable("DB_USER")};" +
-            //                  $"password={Environment.GetEnvironmentVariable("DB_PASSWORD")}")
-            //     .UseLazyLoadingProxies();
+            // options.UseSqlite("Data Source=GameMaster.db").UseLazyLoadingProxies();
+            options.UseMySql($"server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+                             $"database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+                             $"user={Environment.GetEnvironmentVariable("DB_USER")};" +
+                             $"password={Environment.GetEnvironmentVariable("DB_PASSWORD")}")
+                .UseLazyLoadingProxies();
         
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -35,7 +35,7 @@ namespace GameMasterBot.Data
                 .HasOne(cu => cu.User)
                 .WithMany(u => u.CampaignUsers)
                 .HasForeignKey(cu => cu.UserId);
-            
+
             // GuildUser ManyToMany Resolver
             builder.Entity<GuildUser>().HasKey(gu => new { gu.GuildId, gu.UserId });
             builder.Entity<GuildUser>()

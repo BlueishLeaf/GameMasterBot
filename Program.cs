@@ -7,6 +7,8 @@ using GameMasterBot.Data;
 using GameMasterBot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace GameMasterBot
 {
@@ -18,8 +20,12 @@ namespace GameMasterBot
         {
             await using var services = BuildServiceProvider();
             var client = services.GetRequiredService<DiscordSocketClient>();
-            client.Log += LogAsync;
-
+            
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.File("logs/GameMasterBot.log", rollingInterval: RollingInterval.Day)
+                .WriteTo.Console(theme: SystemConsoleTheme.Colored)
+                .CreateLogger();
+            services.GetRequiredService<LoggingService>();
             await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
             await client.StartAsync();
             
@@ -37,12 +43,8 @@ namespace GameMasterBot
             .AddSingleton<UserService>()
             .AddSingleton<CampaignService>()
             .AddSingleton<SessionService>()
+            .AddSingleton<LoggingService>()
+            .AddLogging(configure => configure.AddSerilog())
             .BuildServiceProvider();
-
-        private static Task LogAsync(LogMessage msg)
-        {
-            Console.WriteLine(msg.ToString());
-            return Task.CompletedTask;
-        }
     }
 }

@@ -7,10 +7,9 @@ namespace GameMasterBot.Models.Entities
     {
         public ulong Id { get; set; }
         public DateTime Timestamp { get; set; }
-        public bool ReminderSent { get; set; }
-        public bool Activated { get; set; }
+        public SessionState State { get; set; }
         public Schedule Schedule { get; set; }
         public ulong CampaignId { get; set; }
-        public virtual Campaign Campaign { get; set; }
+        public virtual Campaign Campaign { get; set; } = null!;
     }
 }
