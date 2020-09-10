@@ -33,13 +33,14 @@ namespace GameMasterBot.Modules
             [Summary("The time at which the session will take place.")] string time)
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
 
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
             if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to add a session to this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
-            if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy hh:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-                return GameMasterResult.ErrorResult("you entered an invalid date.");
+            if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                return GameMasterResult.ErrorResult("you entered an invalid date. Dates must be in the form 'dd/MM/yyyy hh:mm'");
 
             var user = await _userService.GetByDiscordUser(Context.User);
             var timeZoneId = user.TimeZoneId;
@@ -52,6 +53,7 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult("your timezone was not found.");
         
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
+            if (utcTime <= DateTime.UtcNow) return GameMasterResult.ErrorResult("you cannot schedule a session in the past!");
 
             try
             {
@@ -73,14 +75,15 @@ namespace GameMasterBot.Modules
             [Summary("The schedule type for the session.")] string schedule)
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
 
             // Check to make sure that this user is the game master of the campaign
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
             if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to schedule a session for this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
-            if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy hh:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-                return GameMasterResult.ErrorResult("you entered an invalid date.");
+            if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                return GameMasterResult.ErrorResult("you entered an invalid date. Dates must be in the form 'dd/MM/yyyy hh:mm'");
 
             var user = await _userService.GetByDiscordUser(Context.User);
             var timeZoneId = user.TimeZoneId;
@@ -93,7 +96,9 @@ namespace GameMasterBot.Modules
                 return GameMasterResult.ErrorResult("your timezone was not found.");
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
 
-            var scheduleLower = schedule.ToLower();
+            if (utcTime <= DateTime.UtcNow) return GameMasterResult.ErrorResult("you cannot schedule a session in the past!");
+
+                var scheduleLower = schedule.ToLower();
             Schedule scheduleValue;
             switch (scheduleLower)
             {
@@ -127,6 +132,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> NextAsync()
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
             try
             {
                 var sessions = await _sessionService.GetUpcoming(campaign.Id);
@@ -146,6 +152,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> UpcomingAsync()
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
 
             try
             {
@@ -167,6 +174,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelNextAsync()
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
 
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
             if (campaign.Id != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
@@ -189,10 +197,12 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelScheduleAsync(
             [Summary("The date on which the session will take place.")] string date)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
+
             if (!DateTime.TryParseExact(date, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 return GameMasterResult.ErrorResult("the date you entered was invalid.");
 
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
 
             // Check to make sure that this user is the game master of the campaign
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
@@ -216,11 +226,12 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> CancelDateAsync(
             [Summary("The date on which the session will take place.")] string date)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
+            
             if (!DateTime.TryParseExact(date, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 return GameMasterResult.ErrorResult("the date you entered was invalid.");
-
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-
+            
             // Check to make sure that this user is the game master of the campaign
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
             if (campaign.Id != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)

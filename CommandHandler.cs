@@ -17,7 +17,6 @@ namespace GameMasterBot
         private readonly IServiceProvider _services;
         private readonly ILogger _logger;
 
-        // Retrieve client and CommandService instance via ctor
         public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider services)
         {
             _client = client;
@@ -70,10 +69,9 @@ namespace GameMasterBot
                     if (result is GameMasterResult gameMasterResult) await context.Channel.SendMessageAsync($"I couldn't process your command because {gameMasterResult.Reason}");
                     else await context.Channel.SendMessageAsync("I couldn't process your command. Try again, and if the error persists then log a bug with '!bug'.");
                     break;
-                // Removed for now as it was clashing with other popular bots like Rhythm
-                // case CommandError.UnknownCommand:
-                //     await context.Channel.SendMessageAsync("I don't know that command. Take a look at the command list using '!help'.");
-                //     break;
+                case CommandError.UnknownCommand:
+                    // await context.Channel.SendMessageAsync("I don't know that command. Take a look at the command list using '!help'.");
+                    break;
                 case CommandError.UnmetPrecondition:
                     // TODO: Show the preconditions that were not met
                     // var errors = command.Value.Preconditions.Aggregate("You are not authorized to use this command. ", (current, precondition) => current + $"{precondition.ErrorMessage} ");

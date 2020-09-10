@@ -120,22 +120,24 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> AddPlayersAsync(
             [Summary("The usernames/nicknames of the players in this server that you want to add.")] params string[] names)
         {
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var guildUsers = new List<SocketGuildUser>();
-            foreach (var name in names)
-            {
-                var guildUser = Context.Guild.Users.FirstOrDefault(user =>
-                    string.Equals(user.Username, name, StringComparison.CurrentCultureIgnoreCase) ||
-                    string.Equals(user.Nickname, name, StringComparison.CurrentCultureIgnoreCase));
-                if (guildUser == null)
-                    await ReplyAsync($"I couldn't find a user by the name of '{name}' in this server, so I'll skip them.");
-                else if (guildUser.Id == campaign.UserId) 
-                    await ReplyAsync($"'{guildUser.Username}' is the Game Master for this campaign, so I'll skip them.");
-                else
-                    guildUsers.Add(guildUser);
-            }
             try
             {
+                var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+                if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
+                var guildUsers = new List<SocketGuildUser>();
+                foreach (var name in names)
+                {
+                    var guildUser = Context.Guild.Users.FirstOrDefault(user =>
+                        string.Equals(user.Username, name, StringComparison.CurrentCultureIgnoreCase) ||
+                        string.Equals(user.Nickname, name, StringComparison.CurrentCultureIgnoreCase));
+                    if (guildUser == null)
+                        await ReplyAsync($"I couldn't find a user by the name of '{name}' in this server, so I'll skip them.");
+                    else if (guildUser.Id == campaign.UserId) 
+                        await ReplyAsync($"'{guildUser.Username}' is the Game Master for this campaign, so I'll skip them.");
+                    else
+                        guildUsers.Add(guildUser);
+                }
+
                 var commandIssuer = Context.Guild.GetUser(Context.User.Id);
                 if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                     return GameMasterResult.ErrorResult("you do not have permission to add players to this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
@@ -187,20 +189,21 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> RemovePlayersAsync(
             [Summary("The usernames/nicknames of the players in this campaign that you want to remove.")] params string[] names)
         {
-            var guildUsers = new List<SocketGuildUser>();
-            foreach (var name in names)
-            {
-                var guildUser = Context.Guild.Users.FirstOrDefault(user =>
-                    string.Equals(user.Username, name, StringComparison.CurrentCultureIgnoreCase) ||
-                    string.Equals(user.Nickname, name, StringComparison.CurrentCultureIgnoreCase));
-                if (guildUser == null)
-                    await ReplyAsync($"I couldn't find a user by the name of '{name}' in this server, so I'll skip them.");
-                else
-                    guildUsers.Add(guildUser);
-            }
             try
             {
                 var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+                if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
+                var guildUsers = new List<SocketGuildUser>();
+                foreach (var name in names)
+                {
+                    var guildUser = Context.Guild.Users.FirstOrDefault(user =>
+                        string.Equals(user.Username, name, StringComparison.CurrentCultureIgnoreCase) ||
+                        string.Equals(user.Nickname, name, StringComparison.CurrentCultureIgnoreCase));
+                    if (guildUser == null)
+                        await ReplyAsync($"I couldn't find a user by the name of '{name}' in this server, so I'll skip them.");
+                    else
+                        guildUsers.Add(guildUser);
+                }
                 var commandIssuer = Context.Guild.GetUser(Context.User.Id);
                 if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                     return GameMasterResult.ErrorResult("you do not have permission to remove players from this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
@@ -237,9 +240,10 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> SetUrlAsync(
             [Summary("The URL of the campaign.")] string url)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
                 return GameMasterResult.ErrorResult("the URL you entered is not valid.");
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             campaign.Url = url;
             campaign = await _campaignService.Update(campaign);
             await ReplyAsync("Successfully set the URL for this campaign.", embed: EmbedBuilder.CampaignInfo(campaign));
@@ -252,11 +256,12 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> SetGameMasterAsync(
             [Summary("The newly designated Game Master.")] string gameMaster)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
             var guildUser = Context.Guild.Users.FirstOrDefault(user =>
                 string.Equals(user.Username, gameMaster, StringComparison.CurrentCultureIgnoreCase) ||
                 string.Equals(user.Nickname, gameMaster, StringComparison.CurrentCultureIgnoreCase));
             if (guildUser == null) return GameMasterResult.ErrorResult($"I couldn't find a user by the name of '{gameMaster}' in this server.");
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
             if (gmRole == null) return GameMasterResult.ErrorResult("I couldn't find the Game Master role for this campaign in this server. You can regenerate the roles for this campaign using the '!campaign regenerate-roles' command.'");
             if (campaign.UserId == guildUser.Id) return GameMasterResult.ErrorResult($"'{gameMaster}' is already the Game Master for this campaign!");
@@ -289,6 +294,7 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> RemoveAsync()
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
             if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)                
                 return GameMasterResult.ErrorResult("you do not have permission to remove this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
@@ -325,6 +331,7 @@ namespace GameMasterBot.Modules
             try
             {
                 var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+                if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
                 await ReplyAsync(embed: EmbedBuilder.CampaignSummary(campaign));
                 return GameMasterResult.SuccessResult();
             }

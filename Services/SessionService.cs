@@ -42,6 +42,7 @@ namespace GameMasterBot.Services
                 CampaignId = session.CampaignId,
                 Schedule = session.Schedule,
                 Timestamp = timestamp,
+                State = DateTime.UtcNow.Subtract(timestamp).TotalMinutes <= 30 ? SessionState.Confirmed : SessionState.Scheduled
             });
         }
     }
@@ -95,7 +96,8 @@ namespace GameMasterBot.Services
         {
             CampaignId = campaignId,
             Schedule = schedule,
-            Timestamp = timestamp
+            Timestamp = timestamp,
+            State = DateTime.UtcNow.Subtract(timestamp).TotalMinutes <= 30 ? SessionState.Confirmed : SessionState.Scheduled
         })).Entity;
         await _context.SaveChangesAsync();
         await RefreshTimerData();

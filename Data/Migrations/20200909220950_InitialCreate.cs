@@ -13,7 +13,7 @@ namespace GameMasterBot.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<ulong>(nullable: false),
-                    Name = table.Column<string>(nullable: true)
+                    Name = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -25,7 +25,7 @@ namespace GameMasterBot.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<ulong>(nullable: false),
-                    Username = table.Column<string>(nullable: true),
+                    Username = table.Column<string>(nullable: false),
                     TimeZoneId = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -39,8 +39,8 @@ namespace GameMasterBot.Data.Migrations
                 {
                     Id = table.Column<ulong>(nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(nullable: true),
-                    System = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: false),
+                    System = table.Column<string>(nullable: false),
                     Url = table.Column<string>(nullable: true),
                     TextChannelId = table.Column<ulong>(nullable: false),
                     VoiceChannelId = table.Column<ulong>(nullable: false),
@@ -121,8 +121,7 @@ namespace GameMasterBot.Data.Migrations
                     Id = table.Column<ulong>(nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Timestamp = table.Column<DateTime>(nullable: false),
-                    ReminderSent = table.Column<bool>(nullable: false),
-                    Activated = table.Column<bool>(nullable: false),
+                    State = table.Column<int>(nullable: false),
                     Schedule = table.Column<int>(nullable: false),
                     CampaignId = table.Column<ulong>(nullable: false)
                 },

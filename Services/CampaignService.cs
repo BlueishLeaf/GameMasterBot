@@ -15,8 +15,8 @@ namespace GameMasterBot.Services
         
         public CampaignService(GameMasterContext context) => _context = context;
         
-        public async Task<Campaign> GetByTextChannelId(ulong textChannelId) => 
-            await _context.Campaigns.AsQueryable().SingleAsync(c => c.TextChannelId == textChannelId);
+        public async Task<Campaign?> GetByTextChannelId(ulong textChannelId) => 
+            await _context.Campaigns.AsQueryable().SingleOrDefaultAsync(c => c.TextChannelId == textChannelId);
         
         public async Task<IEnumerable<Campaign>> GetForServer(ulong guildId) => 
             await _context.Campaigns.AsQueryable().Where(c => c.GuildId == guildId).ToListAsync();
