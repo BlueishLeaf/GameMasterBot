@@ -12,13 +12,14 @@ namespace GameMasterBot.Data
         public DbSet<Session> Sessions => Set<Session>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder options) =>
-            // options.UseSqlite("Data Source=GameMaster.db").UseLazyLoadingProxies();
-            options.UseMySql($"server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-                             $"database={Environment.GetEnvironmentVariable("DB_NAME")};" +
-                             $"user={Environment.GetEnvironmentVariable("DB_USER")};" +
-                             $"password={Environment.GetEnvironmentVariable("DB_PASSWORD")}")
-                .UseLazyLoadingProxies();
-        
+            options.UseMySql(
+                $"server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+                $"database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+                $"user={Environment.GetEnvironmentVariable("DB_USER")};" +
+                $"password={Environment.GetEnvironmentVariable("DB_PASSWORD")}",
+                ServerVersion.FromString("10.4.8-mariadb")
+            ).UseLazyLoadingProxies();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // Don't generate IDs for Users and Guilds, use the ID provided by Discord

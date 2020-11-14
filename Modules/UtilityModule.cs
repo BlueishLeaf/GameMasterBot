@@ -57,6 +57,9 @@ namespace GameMasterBot.Modules
         {
             var user = await _userService.GetByDiscordUser(Context.User);
 
+            if (user.TimeZoneId == null)
+                return GameMasterResult.ErrorResult("you have not set a timezone yet. Set one with '!set-timezone' followed by your timezone abbreviation.");
+
             if (!DateTime.TryParse(utcTime, out var parsedTime))
                 return GameMasterResult.ErrorResult("you entered an invalid time. Time must be in the form 'HH:mm'.");
             
