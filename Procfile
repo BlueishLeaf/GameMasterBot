@@ -1,1 +1,1 @@
-worker: cd $HOME/heroku_output && dotnet ./GameMasterBot.dll
+worker: cd $HOME/heroku_output && ./GameMasterBot
