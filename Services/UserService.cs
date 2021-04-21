@@ -16,9 +16,9 @@ namespace GameMasterBot.Services
         {
             var user = await _context.Users.AddIfNotExists(new User
             {
-                Id = socketUser.Id,
+                DiscordId = socketUser.Id,
                 Username = socketUser.Username
-            }, u => u.Id == socketUser.Id);
+            }, u => u.DiscordId == socketUser.Id);
             await _context.SaveChangesAsync();
             return user;
         }
@@ -27,9 +27,9 @@ namespace GameMasterBot.Services
         {
             var userDb = await _context.Users.AddIfNotExists(new User
             {
-                Id = user.Id,
+                DiscordId = user.Id,
                 Username = user.Username
-            }, u => u.Id == user.Id);
+            }, u => u.DiscordId == user.Id);
             userDb.TimeZoneId = timezone;
             await _context.SaveChangesAsync();
         }

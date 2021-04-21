@@ -4,9 +4,10 @@ namespace GameMasterBot.Models.Entities
 {
     public class Guild
     {
-        public ulong Id { get; set; }
+        public long Id { get; set; }
+        public ulong DiscordId { get; set; }
         public string Name { get; set; } = null!;
-        public virtual List<GuildUser> GuildUsers { get; set; } = new List<GuildUser>();
-        public virtual List<Campaign> Campaigns { get; set; } = new List<Campaign>();
+        public virtual List<User> Users { get; set; } = new();
+        public virtual List<Campaign> Campaigns { get; set; } = new();
     }
 }

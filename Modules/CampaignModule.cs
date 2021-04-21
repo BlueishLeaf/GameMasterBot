@@ -132,33 +132,24 @@ namespace GameMasterBot.Modules
                         string.Equals(user.Nickname, name, StringComparison.CurrentCultureIgnoreCase));
                     if (guildUser == null)
                         await ReplyAsync($"I couldn't find a user by the name of '{name}' in this server, so I'll skip them.");
-                    else if (guildUser.Id == campaign.UserId) 
+                    else if (guildUser.Id == campaign.GameMaster.User.DiscordId) 
                         await ReplyAsync($"'{guildUser.Username}' is the Game Master for this campaign, so I'll skip them.");
                     else
                         guildUsers.Add(guildUser);
                 }
 
                 var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-                if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+                if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                     return GameMasterResult.ErrorResult("you do not have permission to add players to this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
                 var playersToAdd = new List<SocketGuildUser>();
                 foreach (var guildUser in guildUsers)
                 {
-                    var foundPlayer = campaign.CampaignUsers.FirstOrDefault(cu => cu.UserId == guildUser.Id);
+                    var foundPlayer = campaign.Players.FirstOrDefault(cu => cu.User.DiscordId == guildUser.Id);
                     if (foundPlayer != null)
                         await ReplyAsync($"'{guildUser.Username}' is already a player in this campaign, so I'll skip them.");
                     else
                     {
                         playersToAdd.Add(guildUser);
-                        // campaign.CampaignUsers.Add(new CampaignUser
-                        // {
-                        //     CampaignId = campaign.Id,
-                        //     User = new User
-                        //     {
-                        //         Id = guildUser.Id,
-                        //         Username = guildUser.Username
-                        //     }
-                        // });
                     }
                 }
 
@@ -205,12 +196,12 @@ namespace GameMasterBot.Modules
                         guildUsers.Add(guildUser);
                 }
                 var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-                if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+                if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                     return GameMasterResult.ErrorResult("you do not have permission to remove players from this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
                 var playersToRemove = new List<SocketGuildUser>();
                 foreach (var guildUser in guildUsers)
                 {
-                    if (campaign.CampaignUsers.FirstOrDefault(cu => cu.UserId == guildUser.Id) == null)
+                    if (campaign.Players.FirstOrDefault(cu => cu.User.DiscordId == guildUser.Id) == null)
                         await ReplyAsync($"'{guildUser.Username}' is not a player in this campaign, so I'll skip them.");
                     else
                         playersToRemove.Add(guildUser);
@@ -252,7 +243,7 @@ namespace GameMasterBot.Modules
 
         [RequireRole("Whitelisted")]
         [Command("set-gamemaster", RunMode = RunMode.Async), Alias("set-gm")]
-        [Summary("Set the game URL of this campaign.")]
+        [Summary("Set the game master for this campaign.")]
         public async Task<RuntimeResult> SetGameMasterAsync(
             [Summary("The newly designated Game Master.")] string gameMaster)
         {
@@ -264,25 +255,22 @@ namespace GameMasterBot.Modules
             if (guildUser == null) return GameMasterResult.ErrorResult($"I couldn't find a user by the name of '{gameMaster}' in this server.");
             var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
             if (gmRole == null) return GameMasterResult.ErrorResult("I couldn't find the Game Master role for this campaign in this server. You can regenerate the roles for this campaign using the '!campaign regenerate-roles' command.'");
-            if (campaign.UserId == guildUser.Id) return GameMasterResult.ErrorResult($"'{gameMaster}' is already the Game Master for this campaign!");
-            var currentGmDiscord = Context.Guild.GetUser(campaign.UserId);
+            if (campaign.GameMaster.User.DiscordId == guildUser.Id) return GameMasterResult.ErrorResult($"'{gameMaster}' is already the Game Master for this campaign!");
+            var currentGmDiscord = Context.Guild.GetUser(campaign.GameMaster.User.DiscordId);
             if (currentGmDiscord != null) await currentGmDiscord.RemoveRoleAsync(gmRole);
-            var player= campaign.CampaignUsers.SingleOrDefault(cu => cu.UserId == guildUser.Id);
+            var player= campaign.Players.SingleOrDefault(cu => cu.User.DiscordId == guildUser.Id);
             if (player != null)
             {
                 var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
                 if (playerRole == null) return GameMasterResult.ErrorResult("I couldn't find the Player role for this campaign in this server. You can regenerate the roles for this campaign using the '!campaign regenerate-roles' command.'");
                 await guildUser.RemoveRoleAsync(playerRole);
                 await guildUser.AddRoleAsync(gmRole);
-                campaign.CampaignUsers.Remove(player);
+                campaign.Players.Remove(player);
             }
             else await guildUser.AddRoleAsync(gmRole);
-            campaign.UserId = guildUser.Id;
-            campaign.User = new User
-            {
-                Id = guildUser.Id,
-                Username = guildUser.Username
-            };
+
+            var newGameMasterUser = await _campaignService.GetUserByDiscordUser(guildUser);
+            campaign.GameMaster = new GameMaster { User = newGameMasterUser };
             campaign = await _campaignService.Update(campaign);
             await ReplyAsync($"Successfully set {guildUser.Username} as the Game Master for this campaign.", embed: EmbedBuilder.CampaignInfo(campaign));
             return GameMasterResult.SuccessResult();
@@ -296,7 +284,7 @@ namespace GameMasterBot.Modules
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)                
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)                
                 return GameMasterResult.ErrorResult("you do not have permission to remove this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
             
             var message = await ReplyAsync("Removing campaign channel and roles...");

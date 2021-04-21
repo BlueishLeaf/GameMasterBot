@@ -98,7 +98,7 @@ namespace GameMasterBot.Services
             SetTimerDelay(await _context.Sessions.AsQueryable()
                 .Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-35)).ToListAsync());
 
-        public async Task<Session> Create(ulong campaignId, Schedule schedule, DateTime timestamp)
+        public async Task<Session> Create(long campaignId, Schedule schedule, DateTime timestamp)
         {
             var session = (await _context.Sessions.AddAsync(new Session
             {
@@ -114,7 +114,7 @@ namespace GameMasterBot.Services
             return session;
         }
 
-        public async Task CancelNext(ulong campaignId)
+        public async Task CancelNext(long campaignId)
         {
             var session = await _context.Sessions.AsQueryable().FirstOrDefaultAsync(s =>
                 s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived && s.CampaignId == campaignId);
@@ -126,7 +126,7 @@ namespace GameMasterBot.Services
             await RefreshTimerData();
         }
 
-        public async Task CancelForDate(ulong campaignId, DateTime date)
+        public async Task CancelForDate(long campaignId, DateTime date)
         {
             var session = await _context.Sessions.AsQueryable().FirstOrDefaultAsync(s =>
                 s.Timestamp >= date && s.Timestamp < date.AddDays(1) && s.State != SessionState.Archived &&
@@ -139,7 +139,7 @@ namespace GameMasterBot.Services
             await RefreshTimerData();
         }
 
-        public async Task CancelScheduleForDate(ulong campaignId, DateTime date)
+        public async Task CancelScheduleForDate(long campaignId, DateTime date)
         {
             var session = await _context.Sessions.AsQueryable().FirstOrDefaultAsync(s =>
                 s.Timestamp >= date && s.Timestamp < date.AddDays(1) && s.State != SessionState.Archived &&
@@ -151,7 +151,7 @@ namespace GameMasterBot.Services
             await RefreshTimerData();
         }
 
-        public async Task<List<Session>> GetUpcoming(ulong campaignId) =>
+        public async Task<List<Session>> GetUpcoming(long campaignId) =>
             await _context.Sessions.AsQueryable().Where(s =>
                     s.CampaignId == campaignId && s.Timestamp >= DateTime.Now && s.State != SessionState.Archived)
                 .ToListAsync();

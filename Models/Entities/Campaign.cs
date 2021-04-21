@@ -4,7 +4,7 @@ namespace GameMasterBot.Models.Entities
 {
     public class Campaign
     {
-        public ulong Id { get; set; }
+        public long Id { get; set; }
         public string Name { get; set; } = null!;
         public string System { get; set; } = null!;
         public string? Url { get; set; }
@@ -14,9 +14,8 @@ namespace GameMasterBot.Models.Entities
         public ulong GameMasterRoleId { get; set; }
         public ulong GuildId { get; set; }
         public virtual Guild Guild { get; set; } = null!;
-        public ulong UserId { get; set; }
-        public virtual User User { get; set; } = null!;
-        public virtual List<CampaignUser> CampaignUsers { get; } = new List<CampaignUser>();
-        public virtual List<Session> Sessions { get; } = new List<Session>();
+        public virtual GameMaster GameMaster { get; set; } = null!;
+        public virtual List<Player> Players { get; } = new();
+        public virtual List<Session> Sessions { get; } = new();
     }
 }

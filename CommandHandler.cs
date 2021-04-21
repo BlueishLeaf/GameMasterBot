@@ -58,11 +58,12 @@ namespace GameMasterBot
             // The command was successful, we don't care about this result, unless we want to log that a command succeeded.
             if (result.IsSuccess)
             {
-                _logger.LogInformation($"Command [{command.Value.Name}] executed for [{context.User.Username}] on [{context.Guild.Name}] in [{context.Channel.Name}]");
+                _logger.LogInformation($"Command [{command.Value.Name}] successfully executed for [{context.User.Username}] on [{context.Guild.Name}] in [{context.Channel.Name}]");
                 return;
             }
-
+            
             // The command failed, so we notify the user that something happened.
+            _logger.LogError($"Command [{command.Value.Name}] unsuccessfully executed for [{context.User.Username}] on [{context.Guild.Name}] in [{context.Channel.Name}]");
             switch (result.Error)
             {
                 case CommandError.Unsuccessful:

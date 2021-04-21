@@ -36,7 +36,7 @@ namespace GameMasterBot.Modules
             if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
 
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to add a session to this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
             if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
@@ -79,7 +79,7 @@ namespace GameMasterBot.Modules
 
             // Check to make sure that this user is the game master of the campaign
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.UserId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to schedule a session for this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
             if (!DateTime.TryParseExact($"{date} {time}", "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
@@ -177,7 +177,7 @@ namespace GameMasterBot.Modules
             if (campaign == null) return GameMasterResult.ErrorResult("you are not in a campaign text channel.");
 
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.Id != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to cancel a session for this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
             try
@@ -206,7 +206,7 @@ namespace GameMasterBot.Modules
 
             // Check to make sure that this user is the game master of the campaign
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.Id != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to cancel a session for this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
             try
@@ -234,7 +234,7 @@ namespace GameMasterBot.Modules
             
             // Check to make sure that this user is the game master of the campaign
             var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.Id != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
                 return GameMasterResult.ErrorResult("you do not have permission to cancel a session for this campaign. You must either be the Game Master of this campaign or a Server Administrator.");
 
             try

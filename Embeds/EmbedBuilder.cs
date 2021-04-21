@@ -15,7 +15,7 @@ namespace GameMasterBot.Embeds
             {
                 Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
                 Color = Color.Purple,
-                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.User.Username}"),
+                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
                 Fields = new List<EmbedFieldBuilder>
                 {
                     new EmbedFieldBuilder
@@ -27,13 +27,13 @@ namespace GameMasterBot.Embeds
                     new EmbedFieldBuilder
                     {
                         Name = "Game Master",
-                        Value = campaign.User.Username,
+                        Value = campaign.GameMaster.User.Username,
                         IsInline = true
                     },
                     new EmbedFieldBuilder
                     {
                         Name = "Players",
-                        Value = campaign.CampaignUsers.Count > 0 ? string.Join(", ", campaign.CampaignUsers) : "No players.",
+                        Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players) : "No players.",
                         IsInline = false
                     }
                 }
@@ -134,7 +134,7 @@ namespace GameMasterBot.Embeds
                     Description =
                         "For a list of all campaigns on this server, use the `!campaign server` command.",
                     Color = Color.Purple,
-                    Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.User.Username}"),
+                    Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
                     Fields = new List<EmbedFieldBuilder>
                     {
                         new EmbedFieldBuilder
@@ -146,13 +146,13 @@ namespace GameMasterBot.Embeds
                         new EmbedFieldBuilder
                         {
                             Name = "Game Master",
-                            Value = campaign.User.Username,
+                            Value = campaign.GameMaster.User.Username,
                             IsInline = true
                         },
                         new EmbedFieldBuilder
                         {
                             Name = "Players",
-                            Value = campaign.CampaignUsers.Count > 0 ? string.Join(", ", campaign.CampaignUsers): "No players.",
+                            Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players): "No players.",
                             IsInline = true
                         },
                         new EmbedFieldBuilder
@@ -175,7 +175,7 @@ namespace GameMasterBot.Embeds
                 Description =
                     "For a list of all campaigns on this server, use the `!campaign server` command.",
                 Color = Color.Purple,
-                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.User.Username}"),
+                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
                 Fields = new List<EmbedFieldBuilder>
                 {
                     new EmbedFieldBuilder
@@ -187,13 +187,13 @@ namespace GameMasterBot.Embeds
                     new EmbedFieldBuilder
                     {
                         Name = "Game Master",
-                        Value = campaign.User.Username,
+                        Value = campaign.GameMaster.User.Username,
                         IsInline = true
                     },
                     new EmbedFieldBuilder
                     {
                         Name = "Players",
-                        Value = string.Join(", ", campaign.CampaignUsers),
+                        Value = string.Join(", ", campaign.Players),
                         IsInline = true
                     },
                     new EmbedFieldBuilder
