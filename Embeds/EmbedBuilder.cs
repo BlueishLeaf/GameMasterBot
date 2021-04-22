@@ -18,22 +18,22 @@ namespace GameMasterBot.Embeds
                 Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
                 Fields = new List<EmbedFieldBuilder>
                 {
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "System",
                         Value = campaign.System,
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Game Master",
                         Value = campaign.GameMaster.User.Username,
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Players",
-                        Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players) : "No players.",
+                        Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players.Select(p => p.User.Username)) : "No players.",
                         IsInline = false
                     }
                 }
@@ -47,19 +47,19 @@ namespace GameMasterBot.Embeds
                 Color = Color.Blue,
                 Fields = new List<EmbedFieldBuilder>
                 {
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Creating a Campaign",
                         Value = "Creating a campaign is as simple as using the `!campaign add` command. This will not only create the campaign in the bot's system, but also create the relevant channels and roles.",
                         IsInline = false
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Scheduling a Session",
                         Value = "Once you have created a campaign, you can use either the `!session add` or `!session schedule` commands to plan a session. The difference between the two commands is that `add` is used to create once-off AdHoc sessions whereas `schedule` is used to create a recurring session, either Weekly, Fortnightly, or Monthly. Players are reminded of a session 30 minutes before, and once more when the session begins.",
                         IsInline = false
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Further Help",
                         Value = "To get further help with this bot, you can use the `!help` command to get a list of all bot commands. For help with a particular command, use the `!help commandName` command.",
@@ -76,13 +76,13 @@ namespace GameMasterBot.Embeds
                 Color = Color.Gold,
                 Fields = new List<EmbedFieldBuilder>
                 {
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Date",
                         Value = session.Timestamp.ToShortDateString(),
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Time",
                         Value = session.Timestamp.ToString("HH:mm"),
@@ -107,13 +107,13 @@ namespace GameMasterBot.Embeds
                 Color = Color.Gold,
                 Fields = new List<EmbedFieldBuilder>
                 {
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Date",
                         Value = dates,
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Time",
                         Value = times,
@@ -137,25 +137,25 @@ namespace GameMasterBot.Embeds
                     Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
                     Fields = new List<EmbedFieldBuilder>
                     {
-                        new EmbedFieldBuilder
+                        new()
                         {
                             Name = "System",
                             Value = campaign.System,
                             IsInline = true
                         },
-                        new EmbedFieldBuilder
+                        new()
                         {
                             Name = "Game Master",
                             Value = campaign.GameMaster.User.Username,
                             IsInline = true
                         },
-                        new EmbedFieldBuilder
+                        new()
                         {
                             Name = "Players",
-                            Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players): "No players.",
+                            Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players.Select(p => p.User.Username)): "No players.",
                             IsInline = true
                         },
-                        new EmbedFieldBuilder
+                        new()
                         {
                             Name = "Upcoming Sessions",
                             Value = "No sessions currently scheduled.",
@@ -178,37 +178,37 @@ namespace GameMasterBot.Embeds
                 Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
                 Fields = new List<EmbedFieldBuilder>
                 {
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "System",
                         Value = campaign.System,
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Game Master",
                         Value = campaign.GameMaster.User.Username,
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Players",
-                        Value = string.Join(", ", campaign.Players),
+                        Value = string.Join(", ", campaign.Players.Select(p => p.User.Username)),
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Upcoming Sessions",
                         Value = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
                         IsInline = false
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Date",
                         Value = dates,
                         IsInline = true
                     },
-                    new EmbedFieldBuilder
+                    new()
                     {
                         Name = "Time",
                         Value = times,

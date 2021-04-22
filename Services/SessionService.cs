@@ -56,7 +56,7 @@ namespace GameMasterBot.Services
             foreach (var session in sessions)
             {
                 var timeDiff = (session.Timestamp - DateTime.UtcNow).TotalMinutes;
-                if (!(timeDiff <= 30) || session.State == SessionState.Archived) continue;
+                if (timeDiff > 30 || session.State == SessionState.Archived) continue;
                 var channelToNotify = (SocketTextChannel) _client.GetChannel(session.Campaign.TextChannelId);
                 if (timeDiff <= 0 && session.State == SessionState.Confirmed)
                 {
