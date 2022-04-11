@@ -64,10 +64,10 @@ namespace GameMasterBot.Modules
                     _ => Color.Default
                 };
                 var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Player: {name}") ??
-                                 (IRole)Context.Guild.CreateRoleAsync($"Player: {name}", null, roleColor, false, null).Result;
+                                 (IRole)Context.Guild.CreateRoleAsync($"Player: {name}", null, roleColor, false, true).Result;
         
                 var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Game Master: {name}") ??
-                                 (IRole)Context.Guild.CreateRoleAsync($"Game Master: {name}", null, roleColor, false, null).Result;
+                                 (IRole)Context.Guild.CreateRoleAsync($"Game Master: {name}", null, roleColor, false, true).Result;
         
                 // Create the category channel for this campaign's system if one does not already exist
                 var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == system) ??
