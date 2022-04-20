@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Discord;
-using Discord.Commands;
 using GameMasterBot.Models.Entities;
 using GameMasterBot.Models.Enums;
 
 namespace GameMasterBot.Embeds
 {
-    public static class EmbedBuilder
+    public static class BotEmbeds
     {
         private const string IconUrl = "https://cdn.discordapp.com/avatars/597026097166680065/5fd03a7d9efa4f8cca8395e5555f4879.png?size=32";
         public static Embed CampaignInfo(Campaign campaign) =>
-            new Discord.EmbedBuilder
+            new EmbedBuilder
             {
                 Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
                 Color = Color.Purple,
@@ -40,7 +39,7 @@ namespace GameMasterBot.Embeds
             }.Build();
         
         public static Embed Overview() =>
-            new Discord.EmbedBuilder
+            new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName("How to use Game Master Bot").WithIconUrl(IconUrl),
                 Description = "**Note:** Before continuing with this bot, ensure that a role called 'Whitelisted' exists on the server. A user requires this role in order to create a campaign.",
@@ -69,7 +68,7 @@ namespace GameMasterBot.Embeds
             }.Build();
 
         public static Embed SessionInfo(string title, Session session) =>
-            new Discord.EmbedBuilder
+            new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
                 Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
@@ -100,7 +99,7 @@ namespace GameMasterBot.Embeds
                 dates += session.Timestamp.ToShortDateString() + "\n";
                 times += session.Timestamp.ToString("HH:mm") + "\n";
             }
-            return new Discord.EmbedBuilder
+            return new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
                 Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
@@ -128,7 +127,7 @@ namespace GameMasterBot.Embeds
         {
             var sessions = campaign.Sessions.Where(s => s.State != SessionState.Archived).ToList();
             if (!sessions.Any())
-                return new Discord.EmbedBuilder
+                return new EmbedBuilder
                 {
                     Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
                     Description =
@@ -169,7 +168,7 @@ namespace GameMasterBot.Embeds
                 dates += session.Timestamp.ToShortDateString() + "\n";
                 times += session.Timestamp.ToString("HH:mm") + "\n";
             }
-            return new Discord.EmbedBuilder
+            return new EmbedBuilder
             {
                 Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
                 Description =
@@ -217,34 +216,5 @@ namespace GameMasterBot.Embeds
                 }
             }.Build();
         }
-
-        public static Embed CommandList(IEnumerable<CommandMatch> commands) =>
-            new Discord.EmbedBuilder
-            {
-                Author = new EmbedAuthorBuilder().WithName("Commands Matching your Search").WithIconUrl(IconUrl),
-                Description = "For a list of all commands, use the `!help` command.",
-                Color = Color.Orange,
-                Fields =  BuildFieldsForCommands(commands)
-            }.Build();
-
-        public static Embed ModuleList(IEnumerable<ModuleInfo> modules) =>
-            new Discord.EmbedBuilder
-            {
-                Author = new EmbedAuthorBuilder().WithName("All Commands").WithIconUrl(IconUrl),
-                Description = "For help with a specific command, use the `!help 'command'` command.",
-                Color = Color.Red,
-                Fields = BuildFieldsForModules(modules)
-            }.Build();
-
-        private static List<EmbedFieldBuilder> BuildFieldsForCommands(IEnumerable<CommandMatch> matches) => 
-            matches.Select(match => new EmbedFieldBuilder
-            {
-                Name = "`!" + string.Join("`, `!", match.Command.Aliases) + "`",
-                Value = $"**Summary:** {match.Command.Summary}\n**Parameters:** {(match.Command.Parameters.Any() ? "\n" + string.Join("\n", match.Command.Parameters.Select(parameter => $"*{parameter.Name}:* {parameter.Summary}")) : "*None*")}", IsInline = false
-            }).ToList();
-
-        private static List<EmbedFieldBuilder> BuildFieldsForModules(IEnumerable<ModuleInfo> modules) =>
-            (from module in modules let description = module.Commands.Aggregate("", (current, command) => current + $"`{command.Name}` - {command.Summary}\n")
-            select new EmbedFieldBuilder {Name = module.Group != null ? $"{module.Name} Commands - `!{module.Group} 'command'`": $"{module.Name} Commands", Value = description, IsInline = false}).ToList();
     }
 }

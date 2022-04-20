@@ -8,9 +8,9 @@ namespace GameMasterBot.Services
 {
     public class UserService
     {
-        private readonly GameMasterContext _context;
+        private readonly GameMasterBotContext _context;
 
-        public UserService(GameMasterContext context) => _context = context;
+        public UserService(GameMasterBotContext context) => _context = context;
 
         public async Task<User> GetByDiscordUser(SocketUser socketUser)
         {

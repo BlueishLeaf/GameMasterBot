@@ -11,9 +11,9 @@ namespace GameMasterBot.Services
 {
     public class CampaignService
     {
-        private readonly GameMasterContext _context;
+        private readonly GameMasterBotContext _context;
         
-        public CampaignService(GameMasterContext context) => _context = context;
+        public CampaignService(GameMasterBotContext context) => _context = context;
         
         public async Task<Campaign?> GetByTextChannelId(ulong textChannelId) => 
             await _context.Campaigns.AsQueryable().SingleOrDefaultAsync(c => c.TextChannelId == textChannelId);
@@ -56,30 +56,24 @@ namespace GameMasterBot.Services
             return campaignDb;
         }
 
-        public async Task<Campaign> AddPlayers(long id, IEnumerable<SocketGuildUser> guildUsers)
+        public async Task<Campaign> AddPlayer(long id, SocketGuildUser guildUser)
         {
             var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
-            foreach (var guildUser in guildUsers)
+            var user = await _context.Users.AddIfNotExists(new User
             {
-                var user = await _context.Users.AddIfNotExists(new User
-                {
-                    DiscordId = guildUser.Id,
-                    Username = guildUser.Username
-                }, u => u.DiscordId == guildUser.Id);
-                campaign.Players.Add(new Player { User = user });
-            }
+                DiscordId = guildUser.Id,
+                Username = guildUser.Username
+            }, u => u.DiscordId == guildUser.Id);
+            campaign.Players.Add(new Player { User = user });
             await _context.SaveChangesAsync();
             return campaign;
         }
         
-        public async Task<Campaign> RemovePlayers(long id, IEnumerable<SocketGuildUser> guildUsers)
+        public async Task<Campaign> RemovePlayer(long id, SocketGuildUser guildUser)
         {
             var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
-            foreach (var guildUser in guildUsers)
-            {
-                var campaignPlayer = campaign.Players.Single(p => p.User.DiscordId == guildUser.Id);
-                campaign.Players.Remove(campaignPlayer);
-            }
+            var campaignPlayer = campaign.Players.Single(p => p.User.DiscordId == guildUser.Id);
+            campaign.Players.Remove(campaignPlayer);
             await _context.SaveChangesAsync();
             return campaign;
         }

@@ -14,11 +14,11 @@ namespace GameMasterBot.Services
     public class SessionService
     {
         private readonly DiscordSocketClient _client;
-        private readonly GameMasterContext _context;
+        private readonly GameMasterBotContext _context;
         private readonly Timer _timer;
         private const int InitialDelay = 15;
 
-        public SessionService(DiscordSocketClient client, GameMasterContext context)
+        public SessionService(DiscordSocketClient client, GameMasterBotContext context)
         {
             _client = client;
             _context = context;

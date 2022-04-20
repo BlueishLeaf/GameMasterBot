@@ -1,50 +1,85 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using GameMasterBot.Data;
 using GameMasterBot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace GameMasterBot
 {
-    internal static class Program
+    internal class Program
     {
-        private static void Main() => MainAsync().GetAwaiter().GetResult();
+        private readonly DiscordSocketClient _client;
+        private readonly InteractionService _interactionService;
 
-        private static async Task MainAsync()
+        private Program()
+        {
+            var clientConfig = new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.AllUnprivileged
+            };
+            _client = new DiscordSocketClient(clientConfig);
+            _interactionService = new InteractionService(_client.Rest);
+        }
+        
+        private static Task Main() => new Program().MainAsync();
+
+        private async Task MainAsync()
         {
             await using var services = BuildServiceProvider();
-            var client = services.GetRequiredService<DiscordSocketClient>();
-            
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.File("logs/GameMasterBot.log", rollingInterval: RollingInterval.Day)
-                .WriteTo.Console(theme: SystemConsoleTheme.Colored)
-                .CreateLogger();
-            services.GetRequiredService<LoggingService>();
-            await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
-            await client.StartAsync();
-            
-            await services.GetRequiredService<CommandHandler>().InitializeAsync();
-            await services.GetRequiredService<GameMasterContext>().Database.MigrateAsync();
 
-            await Task.Delay(-1);
+            await services.GetRequiredService<GameMasterBotContext>().Database.MigrateAsync();
+
+            _client.Log += LogAsync;
+            _interactionService.Log += LogAsync;
+            _client.Ready += ReadyAsync;
+
+            var discordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
+            await _client.LoginAsync(TokenType.Bot, discordToken);
+            await _client.StartAsync();
+
+            await services.GetRequiredService<InteractionHandler>().InitializeAsync();
+
+            await Task.Delay(Timeout.Infinite);
         }
 
-        private static ServiceProvider BuildServiceProvider() => new ServiceCollection()
-            .AddSingleton<DiscordSocketClient>()
-            .AddSingleton<CommandService>()
-            .AddSingleton<CommandHandler>()
-            .AddDbContext<GameMasterContext>()
+        private ServiceProvider BuildServiceProvider() => new ServiceCollection()
+            .AddSingleton(_client)
+            .AddSingleton(_interactionService)
+            .AddSingleton<InteractionHandler>()
+            .AddDbContext<GameMasterBotContext>()
             .AddSingleton<UserService>()
             .AddSingleton<CampaignService>()
             .AddSingleton<SessionService>()
-            .AddSingleton<LoggingService>()
-            .AddLogging(configure => configure.AddSerilog())
             .BuildServiceProvider();
+        
+        private static Task LogAsync(LogMessage logMessage)
+        {
+            Console.WriteLine(logMessage.ToString());
+            return Task.CompletedTask;
+        }
+
+        private async Task ReadyAsync()
+        {
+            if (Debugger.IsAttached)
+            {
+                // Add the commands to a specific test Guild immediately
+                var testGuildId = Environment.GetEnvironmentVariable("TEST_GUILD_ID");
+                Console.WriteLine($"In debug mode, adding commands to {testGuildId}...");
+                await _interactionService.RegisterCommandsToGuildAsync(Convert.ToUInt64(testGuildId));
+            }
+            else
+            {
+                // Add the commands globally, will take around an hour
+                await _interactionService.RegisterCommandsGloballyAsync();
+            }
+            Console.WriteLine($"Connected as -> [{_client.CurrentUser}]");
+            Console.WriteLine($"We are on [{_client.Guilds.Count}] guilds");
+        }
     }
 }

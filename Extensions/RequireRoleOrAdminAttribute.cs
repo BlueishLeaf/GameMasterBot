@@ -6,15 +6,15 @@ using Discord.WebSocket;
 
 namespace GameMasterBot.Extensions
 {
-    public class RequireRoleAttribute: PreconditionAttribute
+    public class RequireRoleOrAdminAttribute: PreconditionAttribute
     {
         private readonly string _name;
 
-        public RequireRoleAttribute(string name) => _name = name;
+        public RequireRoleOrAdminAttribute(string name) => _name = name;
 
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            if (!(context.User is SocketGuildUser gUser))
+            if (context.User is not SocketGuildUser gUser)
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
             if (gUser.Roles.Any(r => r.Name == _name) || gUser.GuildPermissions.Administrator)
                 return Task.FromResult(PreconditionResult.FromSuccess());

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameMasterBot.Data
 {
-    public class GameMasterContext : DbContext
+    public class GameMasterBotContext : DbContext
     {
         public DbSet<Guild> Guilds => Set<Guild>();
         public DbSet<User> Users => Set<User>();

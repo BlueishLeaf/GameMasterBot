@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace GameMasterBot.Data.Migrations
 {
-    [DbContext(typeof(GameMasterContext))]
+    [DbContext(typeof(GameMasterBotContext))]
     partial class GameMasterContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

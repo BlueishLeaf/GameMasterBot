@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace GameMasterBot.Data.Migrations
 {
-    [DbContext(typeof(GameMasterContext))]
+    [DbContext(typeof(GameMasterBotContext))]
     [Migration("20210421220454_InitialCreate")]
     partial class InitialCreate
     {
