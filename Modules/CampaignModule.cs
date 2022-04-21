@@ -225,9 +225,7 @@ namespace GameMasterBot.Modules
             {
                 var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
                 if (playerRole == null)
-                {
                     return CommandResult.FromError("I couldn't find the player role for this campaign in this server.");
-                }
 
                 await mentionedUser.RemoveRoleAsync(playerRole);
                 await mentionedUser.AddRoleAsync(gmRole);
