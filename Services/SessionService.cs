@@ -28,9 +28,9 @@ namespace GameMasterBot.Services
 
         private async Task CreateNextIfNecessary(Session session)
         {
-            if (session.ScheduleFrequency != ScheduleFrequency.Standalone)
+            if (session.Frequency != ScheduleFrequency.Standalone)
             {
-                var timestamp = session.ScheduleFrequency switch
+                var timestamp = session.Frequency switch
                 {
                     ScheduleFrequency.Weekly => session.Timestamp.AddDays(7),
                     ScheduleFrequency.Fortnightly => session.Timestamp.AddDays(14),
@@ -40,12 +40,13 @@ namespace GameMasterBot.Services
                 await _context.Sessions.AddAsync(new Session
                 {
                     CampaignId = session.CampaignId,
-                    ScheduleFrequency = session.ScheduleFrequency,
+                    Frequency = session.Frequency,
                     Timestamp = timestamp,
                     State = timestamp.Subtract(DateTime.UtcNow).TotalMinutes <= 30
                         ? SessionState.Confirmed
                         : SessionState.Scheduled
                 });
+                await _context.SaveChangesAsync();
             }
         }
 
@@ -103,7 +104,7 @@ namespace GameMasterBot.Services
             var session = (await _context.Sessions.AddAsync(new Session
             {
                 CampaignId = campaignId,
-                ScheduleFrequency = scheduleFrequency,
+                Frequency = scheduleFrequency,
                 Timestamp = timestamp,
                 State = timestamp.Subtract(DateTime.UtcNow).TotalMinutes <= 30
                     ? SessionState.Confirmed
@@ -153,7 +154,7 @@ namespace GameMasterBot.Services
 
         public async Task<List<Session>> GetUpcoming(long campaignId) =>
             await _context.Sessions.AsQueryable().Where(s =>
-                    s.CampaignId == campaignId && s.Timestamp >= DateTime.Now && s.State != SessionState.Archived)
+                    s.CampaignId == campaignId && s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived)
                 .ToListAsync();
     }
 }

@@ -79,7 +79,7 @@ namespace GameMasterBot
                 await _interactionService.RegisterCommandsGloballyAsync();
             }
             Console.WriteLine($"Connected as -> [{_client.CurrentUser}]");
-            Console.WriteLine($"We are on [{_client.Guilds.Count}] guilds");
+            Console.WriteLine($"I am on [{_client.Guilds.Count}] guilds");
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Discord.WebSocket;
 using GameMasterBot.Data;
 using GameMasterBot.Extensions;
 using GameMasterBot.Models.Entities;
@@ -12,24 +11,24 @@ namespace GameMasterBot.Services
 
         public UserService(GameMasterBotContext context) => _context = context;
 
-        public async Task<User> GetByDiscordUser(SocketUser socketUser)
+        public async Task<User> GetByDiscordUserId(ulong discordUserId)
         {
-            var user = await _context.Users.AddIfNotExists(new User
+            var user = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = socketUser.Id,
-                Username = socketUser.Username
-            }, u => u.DiscordId == socketUser.Id);
+                DiscordId = discordUserId
+            }, u => u.DiscordId == discordUserId);
+            
             await _context.SaveChangesAsync();
             return user;
         }
 
-        public async Task UpdateTimezone(SocketUser user, string timezone)
+        public async Task UpdateTimezone(ulong discordUserId, string timezone)
         {
-            var userDb = await _context.Users.AddIfNotExists(new User
+            var userDb = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = user.Id,
-                Username = user.Username
-            }, u => u.DiscordId == user.Id);
+                DiscordId = discordUserId
+            }, u => u.DiscordId == discordUserId);
+            
             userDb.TimeZoneId = timezone;
             await _context.SaveChangesAsync();
         }

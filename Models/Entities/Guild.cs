@@ -6,8 +6,7 @@ namespace GameMasterBot.Models.Entities
     {
         public long Id { get; set; }
         public ulong DiscordId { get; set; }
-        public string Name { get; set; } = null!;
-        public virtual List<User> Users { get; set; } = new();
-        public virtual List<Campaign> Campaigns { get; set; } = new();
+        public List<User> Users { get; set; } = new();
+        public List<Campaign> Campaigns { get; set; } = new();
     }
 }

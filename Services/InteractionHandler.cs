@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -37,7 +36,6 @@ namespace GameMasterBot.Services
 
             try
             {
-                // Execute the interaction
                 await _interactionService.ExecuteCommandAsync(context, _services);
             }
             catch (Exception exception)
@@ -56,13 +54,12 @@ namespace GameMasterBot.Services
         {
             if (!result.IsSuccess)
             {
-                Console.WriteLine(result.Error);
-
                 var errorMessage = "Sorry, I ran into an unexpected error while trying to execute your command, please try again. If the error persists then bug Killian!";
                 if (result.Error == InteractionCommandError.Unsuccessful)
                 {
-                    if (result is CommandResult commandResult && !commandResult.ErrorReason.IsNullOrEmpty())
+                    if (result is CommandResult commandResult && !string.IsNullOrEmpty(commandResult.ErrorReason))
                     {
+                        Console.WriteLine($"Handled error executing command [{slashCommandInfo.Name}] for user {interactionContext.User.Username} [Id: {interactionContext.User.Id}] [Reason: {commandResult.ErrorReason}]");
                         errorMessage = commandResult.ErrorReason;
                     }
                 }

@@ -19,4 +19,19 @@ public static class CampaignValidationMessages
 
     public static CommandValidationError CampaignAlreadyExists() =>
         new("A campaign with this name already exists on this server.");
+
+    public static CommandValidationError CannotAddGameMaster(string username) =>
+        new($"{username} is already the game master for this campaign, so you cannot add them.");
+
+    public static CommandValidationError CannotAddExistingPlayer(string username) =>
+        new($"{username} is already a player in this campaign.");
+    
+    public static CommandValidationError CannotRemoveNonPlayer(string username) =>
+        new($"{username} is not a player in this campaign.");
+
+    public static CommandValidationError NoPlayerRole() =>
+        new("I couldn't find the player role for this campaign in this server.");
+    
+    public static CommandValidationError InvalidURL() =>
+        new("The URL you entered is not valid a valid URL.");
 }

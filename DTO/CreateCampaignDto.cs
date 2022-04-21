@@ -5,8 +5,8 @@ namespace GameMasterBot.DTO;
 public record CreateCampaignDto(
     string Name,
     string System,
-    SocketUser User,
-    SocketGuild Guild,
+    ulong UserDiscordId,
+    ulong GuildDiscordId,
     ulong TextChannelId,
     ulong VoiceChannelId,
     ulong PlayerRoleId,

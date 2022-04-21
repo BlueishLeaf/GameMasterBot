@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 using GameMasterBot.Data;
 using GameMasterBot.Extensions;
 using GameMasterBot.Models.Entities;
@@ -16,30 +16,34 @@ namespace GameMasterBot.Services
         
         public CampaignService(GameMasterBotContext context) => _context = context;
         
-        public async Task<Campaign?> GetByTextChannelId(ulong textChannelId) => 
-            await _context.Campaigns.AsQueryable().SingleOrDefaultAsync(c => c.TextChannelId == textChannelId);
+        public async Task<Campaign> GetByTextChannelId(ulong textChannelId) => 
+            await _context.Campaigns.AsQueryable()
+                .Include(c => c.Sessions)
+                .SingleOrDefaultAsync(c => c.TextChannelId == textChannelId);
         
         public async Task<IEnumerable<Campaign>> GetAllByGuildId(ulong guildId) => 
-            await _context.Campaigns.AsQueryable().Where(c => c.GuildId == guildId).ToListAsync();
+            await _context.Campaigns.AsQueryable()
+                .Include(c => c.Guild)
+                .Where(c => c.Guild.DiscordId == guildId)
+                .ToListAsync();
         
         public async Task<Campaign> Create(CreateCampaignDto createCampaignDto)
         {
-            var userDb = await _context.Users.AddIfNotExists(new User
+            var userDb = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = createCampaignDto.User.Id,
-                Username = createCampaignDto.User.Username
-            }, u => u.DiscordId == createCampaignDto.User.Id);
+                DiscordId = createCampaignDto.UserDiscordId
+            }, u => u.DiscordId == createCampaignDto.UserDiscordId);
             
-            var guildDb = await _context.Guilds.AddIfNotExists(new Guild
+            var guildDb = await _context.Guilds.FetchOrAddIfNotExists(new Guild
             {
-                DiscordId = createCampaignDto.Guild.Id,
-                Name = createCampaignDto.Guild.Name
-            }, g => g.DiscordId == createCampaignDto.Guild.Id);
+                DiscordId = createCampaignDto.GuildDiscordId
+            }, g => g.DiscordId == createCampaignDto.GuildDiscordId);
             
             var campaignDb = (await _context.Campaigns.AddAsync(new Campaign
             {
                 Name = createCampaignDto.Name,
                 System = createCampaignDto.System,
+                CreatedAt = DateTime.UtcNow,
                 GameMaster = new GameMaster { User = userDb },
                 Guild = guildDb,
                 TextChannelId = createCampaignDto.TextChannelId,
@@ -52,23 +56,22 @@ namespace GameMasterBot.Services
             return campaignDb;
         }
 
-        public async Task<Campaign> AddPlayer(long id, SocketGuildUser guildUser)
+        public async Task<Campaign> AddPlayer(long id, ulong playerDiscordId)
         {
             var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
-            var user = await _context.Users.AddIfNotExists(new User
+            var user = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = guildUser.Id,
-                Username = guildUser.Username
-            }, u => u.DiscordId == guildUser.Id);
-            campaign.Players.Add(new Player { User = user });
+                DiscordId = playerDiscordId
+            }, u => u.DiscordId == playerDiscordId);
+            campaign.Players.Add(new CampaignPlayer { User = user });
             await _context.SaveChangesAsync();
             return campaign;
         }
         
-        public async Task<Campaign> RemovePlayer(long id, SocketGuildUser guildUser)
+        public async Task<Campaign> RemovePlayer(long id, ulong playerDiscordId)
         {
             var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
-            var campaignPlayer = campaign.Players.Single(p => p.User.DiscordId == guildUser.Id);
+            var campaignPlayer = campaign.Players.Single(p => p.User.DiscordId == playerDiscordId);
             campaign.Players.Remove(campaignPlayer);
             await _context.SaveChangesAsync();
             return campaign;
@@ -87,12 +90,5 @@ namespace GameMasterBot.Services
             _context.Campaigns.Remove(campaign);
             await _context.SaveChangesAsync();
         }
-
-        public async Task<User> GetUserByDiscordUser(SocketGuildUser guildUser) =>
-            await _context.Users.AddIfNotExists(new User
-            {
-                DiscordId = guildUser.Id,
-                Username = guildUser.Username
-            }, u => u.DiscordId == guildUser.Id);
     }
 }

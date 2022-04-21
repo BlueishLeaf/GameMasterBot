@@ -1,21 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace GameMasterBot.Models.Entities
 {
     public class Campaign
     {
         public long Id { get; set; }
-        public string Name { get; set; } = null!;
-        public string System { get; set; } = null!;
-        public string? Url { get; set; }
+        public string Name { get; set; }
+        public string System { get; set; }
+        public string Url { get; set; }
+        public DateTime CreatedAt { get; set; }
         public ulong TextChannelId { get; set; }
         public ulong VoiceChannelId { get; set; }
         public ulong PlayerRoleId { get; set; }
         public ulong GameMasterRoleId { get; set; }
-        public ulong GuildId { get; set; }
-        public virtual Guild Guild { get; set; } = null!;
-        public virtual GameMaster GameMaster { get; set; } = null!;
-        public virtual List<Player> Players { get; } = new();
-        public virtual List<Session> Sessions { get; } = new();
+        public long GuildId { get; set; }
+        public virtual Guild Guild { get; set; }
+        public GameMaster GameMaster { get; set; }
+        public List<CampaignPlayer> Players { get; } = new();
+        public List<Session> Sessions { get; } = new();
     }
 }

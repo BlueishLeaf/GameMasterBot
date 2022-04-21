@@ -4,8 +4,8 @@ namespace GameMasterBot.Models.Entities
     {
         public long Id { get; set; }
         public long UserId { get; set; }
-        public virtual User User { get; set; } = null!;
+        public User User { get; set; }
         public long CampaignId { get; set; }
-        public virtual Campaign Campaign { get; set; } = null!;
+        public Campaign Campaign { get; set; }
     }
 }

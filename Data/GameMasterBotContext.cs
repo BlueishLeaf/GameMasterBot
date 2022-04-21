@@ -28,8 +28,8 @@ namespace GameMasterBot.Data
                 $"Password={password};" +
                 "Sslmode=Prefer;" +
                 "Trust Server Certificate=true;";
-            
-            options.UseNpgsql(connectionString).UseLazyLoadingProxies();
+
+            options.UseNpgsql(connectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -40,6 +40,13 @@ namespace GameMasterBot.Data
             
             // Session Timestamp Index
             builder.Entity<Session>().HasIndex(s => s.Timestamp);
+            
+            // Set up AutoIncludes
+            builder.Entity<Campaign>().Navigation(c => c.GameMaster).AutoInclude();
+            builder.Entity<Campaign>().Navigation(c => c.Players).AutoInclude();
+            builder.Entity<CampaignPlayer>().Navigation(cp => cp.User).AutoInclude();
+            builder.Entity<GameMaster>().Navigation(gm => gm.User).AutoInclude();
+            builder.Entity<Session>().Navigation(s => s.Campaign).AutoInclude();
         } 
     }
 }

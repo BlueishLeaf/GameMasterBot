@@ -14,7 +14,7 @@ namespace GameMasterBot.Embeds
             {
                 Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
                 Color = Color.Purple,
-                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
+                Footer = new EmbedFooterBuilder().WithText($"Campaign created on {campaign.CreatedAt:d}"),
                 Fields = new List<EmbedFieldBuilder>
                 {
                     new()
@@ -26,13 +26,13 @@ namespace GameMasterBot.Embeds
                     new()
                     {
                         Name = "Game Master",
-                        Value = campaign.GameMaster.User.Username,
+                        Value = $"<@{campaign.GameMaster.User.DiscordId}>",
                         IsInline = true
                     },
                     new()
                     {
                         Name = "Players",
-                        Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players.Select(p => p.User.Username)) : "No players.",
+                        Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players.Select(p => $"<@{p.User.DiscordId}>")) : "No players.",
                         IsInline = false
                     }
                 }
@@ -49,19 +49,19 @@ namespace GameMasterBot.Embeds
                     new()
                     {
                         Name = "Creating a Campaign",
-                        Value = "Creating a campaign is as simple as using the `!campaign add` command. This will not only create the campaign in the bot's system, but also create the relevant channels and roles.",
+                        Value = "Creating a campaign is as simple as using the `/campaign create` command. This will not only create the campaign in the bot's system, but also create the relevant channels and roles.",
                         IsInline = false
                     },
                     new()
                     {
                         Name = "Scheduling a Session",
-                        Value = "Once you have created a campaign, you can use either the `!session add` or `!session schedule` commands to plan a session. The difference between the two commands is that `add` is used to create once-off AdHoc sessions whereas `schedule` is used to create a recurring session, either Weekly, Fortnightly, or Monthly. Players are reminded of a session 30 minutes before, and once more when the session begins.",
+                        Value = "Once you have created a campaign, you can use the `/session schedule` command to plan a session. This can be used to create a standalone session or a recurring schedule, either Weekly, Fortnightly, or Monthly. Players are reminded of a session 30 minutes before, and once more when the session begins.",
                         IsInline = false
                     },
                     new()
                     {
                         Name = "Further Help",
-                        Value = "To get further help with this bot, you can use the `!help` command to get a list of all bot commands. For help with a particular command, use the `!help commandName` command.",
+                        Value = "To get further help with this bot, annoy Killian.",
                         IsInline = false
                     }
                 }
@@ -71,7 +71,7 @@ namespace GameMasterBot.Embeds
             new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
-                Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
+                Description = "*Note: All session times are given in Universal Time(UTC), use `/timezone convert 'time'` to convert to local time.*",
                 Color = Color.Gold,
                 Fields = new List<EmbedFieldBuilder>
                 {
@@ -102,7 +102,7 @@ namespace GameMasterBot.Embeds
             return new EmbedBuilder
             {
                 Author = new EmbedAuthorBuilder().WithName(title).WithIconUrl(IconUrl),
-                Description = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
+                Description = "*Note: All session times are given in Universal Time(UTC), use `/timezone convert 'time'` to convert to local time.*",
                 Color = Color.Gold,
                 Fields = new List<EmbedFieldBuilder>
                 {
@@ -123,17 +123,15 @@ namespace GameMasterBot.Embeds
         }
         
         // TODO: Tidy up boi
-        public static Embed CampaignSummary(Campaign campaign)
+        public static Embed CampaignSessionSummary(Campaign campaign)
         {
             var sessions = campaign.Sessions.Where(s => s.State != SessionState.Archived).ToList();
             if (!sessions.Any())
                 return new EmbedBuilder
                 {
                     Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
-                    Description =
-                        "For a list of all campaigns on this server, use the `!campaign server` command.",
                     Color = Color.Purple,
-                    Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
+                    Footer = new EmbedFooterBuilder().WithText($"Campaign created on {campaign.CreatedAt:d}"),
                     Fields = new List<EmbedFieldBuilder>
                     {
                         new()
@@ -145,13 +143,13 @@ namespace GameMasterBot.Embeds
                         new()
                         {
                             Name = "Game Master",
-                            Value = campaign.GameMaster.User.Username,
+                            Value = $"<@{campaign.GameMaster.User.DiscordId}>",
                             IsInline = true
                         },
                         new()
                         {
                             Name = "Players",
-                            Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players.Select(p => p.User.Username)): "No players.",
+                            Value = campaign.Players.Count > 0 ? string.Join(", ", campaign.Players.Select(p => $"<@{p.User.DiscordId}>")): "No players.",
                             IsInline = true
                         },
                         new()
@@ -171,10 +169,8 @@ namespace GameMasterBot.Embeds
             return new EmbedBuilder
             {
                 Author = campaign.Url != null ? new EmbedAuthorBuilder().WithName(campaign.Name).WithUrl(campaign.Url).WithIconUrl(IconUrl) : new EmbedAuthorBuilder().WithName(campaign.Name).WithIconUrl(IconUrl),
-                Description =
-                    "For a list of all campaigns on this server, use the `!campaign server` command.",
                 Color = Color.Purple,
-                Footer = new EmbedFooterBuilder().WithText($"Created By: {campaign.GameMaster.User.Username}"),
+                Footer = new EmbedFooterBuilder().WithText($"Campaign created on {campaign.CreatedAt:d}"),
                 Fields = new List<EmbedFieldBuilder>
                 {
                     new()
@@ -186,19 +182,19 @@ namespace GameMasterBot.Embeds
                     new()
                     {
                         Name = "Game Master",
-                        Value = campaign.GameMaster.User.Username,
+                        Value = $"<@{campaign.GameMaster.User.DiscordId}>",
                         IsInline = true
                     },
                     new()
                     {
                         Name = "Players",
-                        Value = string.Join(", ", campaign.Players.Select(p => p.User.Username)),
+                        Value = string.Join(", ", campaign.Players.Select(p => $"<@{p.User.DiscordId}>")),
                         IsInline = true
                     },
                     new()
                     {
                         Name = "Upcoming Sessions",
-                        Value = "*Note: All session times are given in Universal Time(UTC), use `!convert 'time'` to convert to local time.*",
+                        Value = "*Note: All session times are given in Universal Time(UTC), use `/timezone convert 'time'` to convert to local time.*",
                         IsInline = false
                     },
                     new()
