@@ -28,19 +28,19 @@ namespace GameMasterBot.Services
 
         private async Task CreateNextIfNecessary(Session session)
         {
-            if (session.Schedule != Schedule.AdHoc)
+            if (session.ScheduleFrequency != ScheduleFrequency.Standalone)
             {
-                var timestamp = session.Schedule switch
+                var timestamp = session.ScheduleFrequency switch
                 {
-                    Schedule.Weekly => session.Timestamp.AddDays(7),
-                    Schedule.Fortnightly => session.Timestamp.AddDays(14),
-                    Schedule.Monthly => session.Timestamp.AddMonths(1),
+                    ScheduleFrequency.Weekly => session.Timestamp.AddDays(7),
+                    ScheduleFrequency.Fortnightly => session.Timestamp.AddDays(14),
+                    ScheduleFrequency.Monthly => session.Timestamp.AddMonths(1),
                     _ => session.Timestamp
                 };
                 await _context.Sessions.AddAsync(new Session
                 {
                     CampaignId = session.CampaignId,
-                    Schedule = session.Schedule,
+                    ScheduleFrequency = session.ScheduleFrequency,
                     Timestamp = timestamp,
                     State = timestamp.Subtract(DateTime.UtcNow).TotalMinutes <= 30
                         ? SessionState.Confirmed
@@ -98,12 +98,12 @@ namespace GameMasterBot.Services
             SetTimerDelay(await _context.Sessions.AsQueryable()
                 .Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-35)).ToListAsync());
 
-        public async Task<Session> Create(long campaignId, Schedule schedule, DateTime timestamp)
+        public async Task<Session> Create(long campaignId, ScheduleFrequency scheduleFrequency, DateTime timestamp)
         {
             var session = (await _context.Sessions.AddAsync(new Session
             {
                 CampaignId = campaignId,
-                Schedule = schedule,
+                ScheduleFrequency = scheduleFrequency,
                 Timestamp = timestamp,
                 State = timestamp.Subtract(DateTime.UtcNow).TotalMinutes <= 30
                     ? SessionState.Confirmed

@@ -1,8 +1,8 @@
 ﻿namespace GameMasterBot.Models.Enums
 {
-    public enum Schedule
+    public enum ScheduleFrequency
     {
-        AdHoc,
+        Standalone,
         Weekly,
         Fortnightly,
         Monthly

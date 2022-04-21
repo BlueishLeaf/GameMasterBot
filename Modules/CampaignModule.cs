@@ -272,7 +272,7 @@ namespace GameMasterBot.Modules
         
         [RequireRoleOrAdmin("Whitelisted")]
         [SlashCommand("delete", "Deletes this campaign from the server, including channels and roles.")]
-        public async Task<RuntimeResult> RemoveAsync()
+        public async Task<RuntimeResult> DeleteCampaignAsync()
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             if (campaign == null)
@@ -319,7 +319,7 @@ namespace GameMasterBot.Modules
         }
         
         [SlashCommand("info", "Displays all information about this campaign.")]
-        public async Task<RuntimeResult> InfoAsync()
+        public async Task<RuntimeResult> CampaignInfoAsync()
         {
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             if (campaign == null)
@@ -332,7 +332,7 @@ namespace GameMasterBot.Modules
         }
         
         [SlashCommand("server", "Displays information about all the campaigns on this server.")]
-        public async Task<RuntimeResult> ServerAsync()
+        public async Task<RuntimeResult> CampaignServerInfoAsync()
         {
             var campaigns = await _campaignService.GetForServer(Context.Guild.Id);
             var campaignEmbeds = campaigns.Select(BotEmbeds.CampaignSummary).ToArray();
