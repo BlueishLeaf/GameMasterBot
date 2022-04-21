@@ -6,6 +6,7 @@ using GameMasterBot.Extensions;
 using GameMasterBot.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using GameMasterBot.DTO;
 
 namespace GameMasterBot.Services
 {
@@ -18,40 +19,35 @@ namespace GameMasterBot.Services
         public async Task<Campaign?> GetByTextChannelId(ulong textChannelId) => 
             await _context.Campaigns.AsQueryable().SingleOrDefaultAsync(c => c.TextChannelId == textChannelId);
         
-        public async Task<IEnumerable<Campaign>> GetForServer(ulong guildId) => 
+        public async Task<IEnumerable<Campaign>> GetAllByGuildId(ulong guildId) => 
             await _context.Campaigns.AsQueryable().Where(c => c.GuildId == guildId).ToListAsync();
         
-        public async Task<Campaign> Create(
-            string name,
-            string system,
-            SocketUser user,
-            SocketGuild guild,
-            ulong textChannelId,
-            ulong voiceChannelId,
-            ulong playerRoleId,
-            ulong gameMasterRoleId)
+        public async Task<Campaign> Create(CreateCampaignDto createCampaignDto)
         {
             var userDb = await _context.Users.AddIfNotExists(new User
             {
-                DiscordId = user.Id,
-                Username = user.Username
-            }, u => u.DiscordId == user.Id);
+                DiscordId = createCampaignDto.User.Id,
+                Username = createCampaignDto.User.Username
+            }, u => u.DiscordId == createCampaignDto.User.Id);
+            
             var guildDb = await _context.Guilds.AddIfNotExists(new Guild
             {
-                DiscordId = guild.Id,
-                Name = guild.Name
-            }, g => g.DiscordId == guild.Id);
+                DiscordId = createCampaignDto.Guild.Id,
+                Name = createCampaignDto.Guild.Name
+            }, g => g.DiscordId == createCampaignDto.Guild.Id);
+            
             var campaignDb = (await _context.Campaigns.AddAsync(new Campaign
             {
-                Name = name,
-                System = system,
+                Name = createCampaignDto.Name,
+                System = createCampaignDto.System,
                 GameMaster = new GameMaster { User = userDb },
                 Guild = guildDb,
-                TextChannelId = textChannelId,
-                VoiceChannelId = voiceChannelId,
-                PlayerRoleId = playerRoleId,
-                GameMasterRoleId = gameMasterRoleId
+                TextChannelId = createCampaignDto.TextChannelId,
+                VoiceChannelId = createCampaignDto.VoiceChannelId,
+                PlayerRoleId = createCampaignDto.PlayerRoleId,
+                GameMasterRoleId = createCampaignDto.GameMasterRoleId
             })).Entity;
+            
             await _context.SaveChangesAsync();
             return campaignDb;
         }

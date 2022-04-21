@@ -2,14 +2,16 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using GameMasterBot.Constants;
+using GameMasterBot.DTO;
 using GameMasterBot.Embeds;
 using GameMasterBot.Extensions;
+using GameMasterBot.Messages;
 using GameMasterBot.Models.Entities;
 using GameMasterBot.Services;
+using GameMasterBot.Utils;
 
 namespace GameMasterBot.Modules
 {
@@ -27,99 +29,56 @@ namespace GameMasterBot.Modules
             [Summary("campaign-name", "The name of your new campaign.")] string campaignName,
             [Summary("game-system", "The name of the game system you will use for your new campaign.")] string gameSystem)
         {
-
-            // TODO move validation elsewhere
-            var channelRegex = new Regex(ChannelValidationConstants.NameRegexPattern);
-            
-            if (campaignName.Length > ChannelValidationConstants.NameMaxLength)
-            {
-                return CommandResult.FromError($"The name of your campaign must be less than {ChannelValidationConstants.NameMaxLength} characters.");
-            }
-
-            if (!channelRegex.IsMatch(campaignName))
-            {
-                return CommandResult.FromError("The name of your campaign must only contain alphanumeric characters and spaces.");
-            }
-
-            if (gameSystem.Length > ChannelValidationConstants.NameMaxLength)
-            {
-                return CommandResult.FromError($"The name of your campaign's game system must be less than {ChannelValidationConstants.NameMaxLength} characters long.");
-            }
-
-            if (!channelRegex.IsMatch(campaignName))
-            {
-                return CommandResult.FromError("The name of your campaign's game system must only contain alphanumeric characters and spaces.");
-            }
-
-            var textChannelName = campaignName.ToLower().Replace(' ', '-');
-            var campaignExisting = (await _campaignService.GetForServer(Context.Guild.Id)).FirstOrDefault(c => c.Name == campaignName);
-            if (campaignExisting != null)
-            {
-                return CommandResult.FromError("A campaign with this name already exists on this server.");
-            }
-
+            // Defer response as it takes longer than 3 seconds to create the campaign resources
             await DeferAsync(ephemeral: true);
 
-            // TODO: Move resource creation elsewhere
-            Color roleColor;
-            var random = new Random();
-            roleColor = random.Next(5) switch
-            {
-                0 => Color.Blue,
-                1 => Color.Green,
-                2 => Color.Purple,
-                3 => Color.Orange,
-                4 => Color.Red,
-                5 => Color.Teal,
-                _ => Color.Default
-            };
-            var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Player: {campaignName}") ??
-                             (IRole)Context.Guild.CreateRoleAsync($"Player: {campaignName}", null, roleColor, false, true).Result;
-    
-            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Name == $"Game Master: {campaignName}") ??
-                             (IRole)Context.Guild.CreateRoleAsync($"Game Master: {campaignName}", null, roleColor, false, true).Result;
-    
-            // Create the category channel for this campaign's system if one does not already exist
-            var campaignCategoryChannel = Context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == gameSystem) ??
-                                              (ICategoryChannel)Context.Guild.CreateCategoryChannelAsync(gameSystem).Result;
-    
-            // Create the text channel for this campaign if one does not exist
-            var campaignTextChannel = Context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == textChannelName) ??
-                                      (ITextChannel)Context.Guild.CreateTextChannelAsync(textChannelName, channel =>
-                                      {
-                                          channel.CategoryId = campaignCategoryChannel.Id;
-                                          channel.Topic = $"Channel for discussing the {gameSystem} campaign '{campaignName}'.";
-                                      }).Result;
-    
-            // Set the permissions on the campaign's text channel
-            await campaignTextChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(readMessageHistory: PermValue.Deny, sendMessages: PermValue.Deny, viewChannel: PermValue.Deny));
-            await campaignTextChannel.AddPermissionOverwriteAsync(playerRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow, addReactions: PermValue.Allow));
-            await campaignTextChannel.AddPermissionOverwriteAsync(gmRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, manageMessages: PermValue.Allow, manageChannel: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow));
-    
-            // Create the voice channel for this campaign if one does not exist
-            var campaignVoiceChannel = Context.Guild.VoiceChannels.FirstOrDefault(chan => chan.Name == campaignName) ??
-                                       (IVoiceChannel)Context.Guild.CreateVoiceChannelAsync(campaignName,
-                                           channel => channel.CategoryId = campaignCategoryChannel.Id).Result;
-    
-            // Set the permissions on the campaign's voice channel
-            await campaignVoiceChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(connect: PermValue.Deny, viewChannel: PermValue.Deny));
-            await campaignVoiceChannel.AddPermissionOverwriteAsync(playerRole, new OverwritePermissions(connect: PermValue.Allow, viewChannel: PermValue.Allow, speak: PermValue.Allow, useVoiceActivation: PermValue.Allow));
-            await campaignVoiceChannel.AddPermissionOverwriteAsync(gmRole, new OverwritePermissions(connect: PermValue.Allow, manageChannel: PermValue.Allow, viewChannel: PermValue.Allow, speak: PermValue.Allow, useVoiceActivation: PermValue.Allow));
-    
-            // Add the gm role to the game master
-            await Context.Guild.Users.First(user => user.Id == Context.User.Id).AddRoleAsync(gmRole);
-            
-            // TODO: Create a DTO for this
-            var campaign = await _campaignService.Create(campaignName, gameSystem, Context.User, Context.Guild, campaignTextChannel.Id, campaignVoiceChannel.Id, playerRole.Id, gmRole.Id);
+            var commandValidationError = await ValidateCreateCampaignCommand(campaignName, gameSystem);
+            if (commandValidationError != null)
+                return CommandResult.FromError(commandValidationError.ErrorMessage);
 
-            await ModifyOriginalResponseAsync(m =>
+            var entityManager = new CampaignSocketEntityManager(Context);
+            var campaignEntities = await entityManager.CreateNewCampaign(campaignName, gameSystem);
+
+            var createCampaignDto = new CreateCampaignDto(
+                campaignName,
+                gameSystem,
+                Context.User,
+                Context.Guild,
+                campaignEntities.TextChannelId,
+                campaignEntities.VoiceChannelId,
+                campaignEntities.PlayerRoleId,
+                campaignEntities.GameMasterRoleId);
+            var campaign = await _campaignService.Create(createCampaignDto);
+
+            await ModifyOriginalResponseAsync(message =>
             {
-                m.Content = $"Your campaign has been created successfully! You should head over to <#{campaignTextChannel.Id}> and add your players with the '/campaign add-player' command.";
-                m.Embed = BotEmbeds.CampaignInfo(campaign);
+                message.Content = CampaignResponseMessages.CampaignSuccessfullyCreated(campaign.TextChannelId);
+                message.Embed = BotEmbeds.CampaignInfo(campaign);
             });
             return CommandResult.AsSuccess();
         }
-        
+
+        private async Task<CommandValidationError?> ValidateCreateCampaignCommand(string campaignName, string gameSystem)
+        {
+            if (campaignName.Length > CampaignValidationConstants.NameMaxLength)
+                return CampaignValidationMessages.InvalidNameLength();
+
+            var channelRegex = new Regex(CampaignValidationConstants.NameRegexPattern);
+            if (!channelRegex.IsMatch(campaignName))
+                return CampaignValidationMessages.InvalidNamePattern();
+
+            if (gameSystem.Length > CampaignValidationConstants.NameMaxLength)
+                return CampaignValidationMessages.InvalidSystemLength();
+
+            if (!channelRegex.IsMatch(gameSystem))
+                return CampaignValidationMessages.InvalidSystemPattern();
+
+            var guildCampaigns = await _campaignService.GetAllByGuildId(Context.Guild.Id);
+            return guildCampaigns.Any(c => c.Name == campaignName) ?
+                CampaignValidationMessages.CampaignAlreadyExists() :
+                null;
+        }
+
         [RequireRoleOrAdmin("Whitelisted")]
         [SlashCommand("add-player", "Add a new player to this campaign.")]
         public async Task<RuntimeResult> AddPlayersAsync(
@@ -334,7 +293,7 @@ namespace GameMasterBot.Modules
         [SlashCommand("server", "Displays information about all the campaigns on this server.")]
         public async Task<RuntimeResult> CampaignServerInfoAsync()
         {
-            var campaigns = await _campaignService.GetForServer(Context.Guild.Id);
+            var campaigns = await _campaignService.GetAllByGuildId(Context.Guild.Id);
             var campaignEmbeds = campaigns.Select(BotEmbeds.CampaignSummary).ToArray();
             
             await RespondAsync(embeds: campaignEmbeds);
