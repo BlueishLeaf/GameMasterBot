@@ -90,12 +90,11 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> AddPlayersAsync(
             [Summary("player", "The person that you want to add as a player to this campaign.")] SocketGuildUser mentionedUser)
         {
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            
-            var commandValidationError = ValidateAddPlayerCommand(campaign, mentionedUser);
+            var commandValidationError = await ValidateAddPlayerCommand(mentionedUser);
             if (commandValidationError != null)
                 return CommandResult.FromError(commandValidationError.ErrorMessage);
-
+            
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             campaign = await _campaignService.AddPlayer(campaign.Id, mentionedUser.Id);
 
             var campaignRole = Context.Guild.Roles.First(role => role.Id == campaign.PlayerRoleId);
@@ -105,8 +104,9 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        private CommandValidationError ValidateAddPlayerCommand(Campaign campaign, IUser mentionedUser)
+        private async Task<CommandValidationError> ValidateAddPlayerCommand(IUser mentionedUser)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             if (campaign == null)
                 return CommonValidationMessages.NotInCampaignChannel();
 
@@ -132,12 +132,11 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> RemovePlayersAsync(
             [Summary("player", "The person that you want to remove as a player from this campaign.")] SocketGuildUser mentionedUser)
         {
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            
-            var commandValidationError = ValidateRemovePlayerCommand(campaign, mentionedUser);
+            var commandValidationError = await ValidateRemovePlayerCommand(mentionedUser);
             if (commandValidationError != null)
                 return CommandResult.FromError(commandValidationError.ErrorMessage);
-
+            
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             campaign = await _campaignService.RemovePlayer(campaign.Id, mentionedUser.Id);
             
             var campaignRole = Context.Guild.Roles.First(role => role.Id == campaign.PlayerRoleId);
@@ -147,8 +146,9 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        private CommandValidationError ValidateRemovePlayerCommand(Campaign campaign, IUser mentionedUser)
+        private async Task<CommandValidationError> ValidateRemovePlayerCommand(IUser mentionedUser)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             if (campaign == null)
                 return CommonValidationMessages.NotInCampaignChannel();
 
@@ -171,11 +171,11 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> SetUrlAsync(
             [Summary("url", "The URL of the campaign.")] string url)
         {
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-
-            var commandValidationError = ValidateSetUrlCommand(campaign, url);
+            var commandValidationError = await ValidateSetUrlCommand(url);
             if (commandValidationError != null)
                 return CommandResult.FromError(commandValidationError.ErrorMessage);
+            
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
 
             campaign.Url = url;
             campaign = await _campaignService.Update(campaign);
@@ -184,49 +184,38 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        private static CommandValidationError ValidateSetUrlCommand(Campaign campaign, string url)
+        private async Task<CommandValidationError> ValidateSetUrlCommand(string url)
         {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             if (campaign == null)
                 return CommonValidationMessages.NotInCampaignChannel();
+            
+            var commandIssuer = Context.Guild.GetUser(Context.User.Id);
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+                return CommonValidationMessages.NotGameMasterOrAdmin();
 
             return !Uri.IsWellFormedUriString(url, UriKind.Absolute) ? CampaignValidationMessages.InvalidURL() : null;
         }
         
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("assign-gm", "Assign a new game master for this campaign.")]
+        [SlashCommand("set-game-master", "Assign a new game master for this campaign.")]
         public async Task<RuntimeResult> SetGameMasterAsync(
             [Summary("game-master", "The person that you want to assign as the new game master for this campaign.")] SocketGuildUser mentionedUser)
         {
+            var commandValidationError = await ValidateSetGameMaster(mentionedUser);
+            if (commandValidationError != null)
+                return CommandResult.FromError(commandValidationError.ErrorMessage);
+
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            if (campaign == null)
-            {
-                return CommandResult.FromError("You must be in your campaign's text channel to assign a new game master.");
-            }
 
-            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
-            if (gmRole == null)
-            {
-                return CommandResult.FromError("I couldn't find the game master role for your campaign on this server.");
-            }
-
-            if (campaign.GameMaster.User.DiscordId == mentionedUser.Id)
-            {
-                return CommandResult.FromError($"'{mentionedUser.Username}' is already the game master for this campaign!");
-            }
-
+            var gmRole = Context.Guild.Roles.First(r => r.Id == campaign.GameMasterRoleId);
             var currentGmDiscord = Context.Guild.GetUser(campaign.GameMaster.User.DiscordId);
-            if (currentGmDiscord != null)
-            {
-                await currentGmDiscord.RemoveRoleAsync(gmRole);
-            }
+            if (currentGmDiscord != null) await currentGmDiscord.RemoveRoleAsync(gmRole);
 
+            var playerRole = Context.Guild.Roles.First(r => r.Id == campaign.PlayerRoleId);
             var player = campaign.Players.SingleOrDefault(cu => cu.User.DiscordId == mentionedUser.Id);
             if (player != null)
             {
-                var playerRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
-                if (playerRole == null)
-                    return CommandResult.FromError("I couldn't find the player role for this campaign in this server.");
-
                 await mentionedUser.RemoveRoleAsync(playerRole);
                 await mentionedUser.AddRoleAsync(gmRole);
                 campaign.Players.Remove(player);
@@ -240,68 +229,91 @@ namespace GameMasterBot.Modules
             await RespondAsync($"Successfully assigned {mentionedUser.Username} as the game master for this campaign.", embed: BotEmbeds.CampaignInfo(campaign));
             return CommandResult.AsSuccess();
         }
+
+        private async Task<CommandValidationError> ValidateSetGameMaster(IUser newGameMaster)
+        {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null)
+                return CommonValidationMessages.NotInCampaignChannel();
+            
+            var commandIssuer = Context.Guild.GetUser(Context.User.Id);
+            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
+                return CommonValidationMessages.NotGameMasterOrAdmin();
+
+            if (campaign.GameMaster.User.DiscordId == newGameMaster.Id)
+                return CampaignValidationMessages.CannotSetCurrentGameMaster(newGameMaster.Username);
+
+            if (Context.Guild.Roles.All(role => role.Id != campaign.GameMasterRoleId))
+                return CampaignValidationMessages.NoGameMasterRole();
+
+            return Context.Guild.Roles.All(role => role.Id != campaign.PlayerRoleId) ?
+                CampaignValidationMessages.NoPlayerRole() :
+                null;
+        }
         
         [RequireRoleOrAdmin("Whitelisted")]
         [SlashCommand("delete", "Deletes this campaign from the server, including channels and roles.")]
         public async Task<RuntimeResult> DeleteCampaignAsync()
         {
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            if (campaign == null)
-            {
-                return CommandResult.FromError("You must be in your campaign's text channel to delete it.");
-            }
-
-            var commandIssuer = Context.Guild.GetUser(Context.User.Id);
-            if (campaign.GameMaster.User.DiscordId != Context.User.Id && !commandIssuer.GuildPermissions.Administrator)
-            {
-                return CommandResult.FromError("You do not have permission to delete this campaign. You must either be the game master of this campaign or a server administrator.");
-            }
-
             await DeferAsync(ephemeral: true);
-        
+            
+            var commandValidationError = await ValidateDeleteCampaignCommand();
+            if (commandValidationError != null)
+                return CommandResult.FromError(commandValidationError.ErrorMessage);
+
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+
             var textChannel = Context.Guild.TextChannels.FirstOrDefault(channel => channel.Id == campaign.TextChannelId);
-            if (textChannel != null)
-            {
-                await Context.Guild.GetTextChannel(textChannel.Id).DeleteAsync();
-            }
+            if (textChannel != null) await Context.Guild.GetTextChannel(textChannel.Id).DeleteAsync();
 
             var voiceChannel = Context.Guild.VoiceChannels.FirstOrDefault(channel => channel.Id == campaign.VoiceChannelId);
-            if (voiceChannel != null)
-            {
-                await Context.Guild.GetVoiceChannel(voiceChannel.Id).DeleteAsync();
-            }
+            if (voiceChannel != null) await Context.Guild.GetVoiceChannel(voiceChannel.Id).DeleteAsync();
 
             var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
-            if (campaignRole != null)
-            {
-                await Context.Guild.GetRole(campaignRole.Id).DeleteAsync();
-            }
+            if (campaignRole != null) await Context.Guild.GetRole(campaignRole.Id).DeleteAsync();
 
             var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
-            if (gmRole != null)
-            {
-                await Context.Guild.GetRole(gmRole.Id).DeleteAsync();
-            }
-            
+            if (gmRole != null) await Context.Guild.GetRole(gmRole.Id).DeleteAsync();
+
             await _campaignService.Remove(campaign.Id);
             
             return CommandResult.AsSuccess();
+        }
+
+        private async Task<CommandValidationError> ValidateDeleteCampaignCommand()
+        {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            if (campaign == null)
+                return CommonValidationMessages.NotInCampaignChannel();
+
+            var commandIssuer = Context.Guild.GetUser(Context.User.Id);
+            var notGmOrAdmin =
+                campaign.GameMaster.User.DiscordId != Context.User.Id &&
+                !commandIssuer.GuildPermissions.Administrator;
+            return notGmOrAdmin
+                ? CommonValidationMessages.NotGameMasterOrAdmin()
+                : null;
         }
         
         [SlashCommand("info", "Displays all information about this campaign.")]
         public async Task<RuntimeResult> CampaignInfoAsync()
         {
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-
-            var commandValidationError = ValidateCampaignInfoCommand(campaign);
+            var commandValidationError = await ValidateCampaignInfoCommand();
             if (commandValidationError != null)
                 return CommandResult.FromError(commandValidationError.ErrorMessage);
+                
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
 
             await RespondAsync(embed: BotEmbeds.CampaignSessionSummary(campaign));
             return CommandResult.AsSuccess();
         }
 
-        private static CommandValidationError ValidateCampaignInfoCommand(Campaign campaign) =>
-            campaign == null ? CommonValidationMessages.NotInCampaignChannel() : null;
+        private async Task<CommandValidationError> ValidateCampaignInfoCommand()
+        {
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            return campaign == null ?
+                CommonValidationMessages.NotInCampaignChannel() :
+                null;
+        }
     }
 }
