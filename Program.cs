@@ -56,6 +56,7 @@ namespace GameMasterBot
             .AddSingleton<UserService>()
             .AddSingleton<CampaignService>()
             .AddSingleton<SessionService>()
+            .AddSingleton<CampaignValidationService>()
             .BuildServiceProvider();
         
         private static Task LogAsync(LogMessage logMessage)
