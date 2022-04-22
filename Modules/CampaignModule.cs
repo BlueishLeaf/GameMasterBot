@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Discord.Interactions;
 using Discord.WebSocket;
 using GameMasterBot.DTO;
@@ -33,7 +32,6 @@ namespace GameMasterBot.Modules
             [Summary("campaign-name", "The name of your new campaign.")] string campaignName,
             [Summary("game-system", "The name of the game system you will use for your new campaign.")] string gameSystem)
         {
-            // Defer response as it takes longer than 3 seconds to create the campaign resources
             await DeferAsync(ephemeral: true);
 
             var createSocketCampaignDto = new CreateSocketCampaignDto(campaignName, gameSystem);
@@ -62,9 +60,8 @@ namespace GameMasterBot.Modules
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             campaign = await _campaignService.AddPlayer(campaign.Id, newPlayer.Id);
-
-            var campaignRole = Context.Guild.Roles.First(role => role.Id == campaign.PlayerRoleId);
-            await newPlayer.AddRoleAsync(campaignRole);
+            
+            await CampaignSocketUtils.AddPlayer(Context, newPlayer, campaign.PlayerRoleId);
             
             await RespondAsync($"Successfully added {newPlayer.Username} to this campaign as a new player.", embed: BotEmbeds.CampaignInfo(campaign));
             return CommandResult.AsSuccess();
@@ -80,9 +77,8 @@ namespace GameMasterBot.Modules
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
             campaign = await _campaignService.RemovePlayer(campaign.Id, playerToRemove.Id);
-            
-            var campaignRole = Context.Guild.Roles.First(role => role.Id == campaign.PlayerRoleId);
-            await playerToRemove.RemoveRoleAsync(campaignRole);
+
+            await CampaignSocketUtils.RemovePlayer(Context, playerToRemove, campaign.PlayerRoleId);
 
             await RespondAsync($"Successfully removed {playerToRemove.Username} from this campaign.", embed: BotEmbeds.CampaignInfo(campaign));
             return CommandResult.AsSuccess();
@@ -97,7 +93,6 @@ namespace GameMasterBot.Modules
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-
             campaign.Url = url;
             campaign = await _campaignService.Update(campaign);
             
@@ -115,19 +110,7 @@ namespace GameMasterBot.Modules
 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
 
-            var gmRole = Context.Guild.Roles.First(r => r.Id == campaign.GameMasterRoleId);
-            var currentGmDiscord = Context.Guild.GetUser(campaign.GameMaster.User.DiscordId);
-            if (currentGmDiscord != null) await currentGmDiscord.RemoveRoleAsync(gmRole);
-
-            var playerRole = Context.Guild.Roles.First(r => r.Id == campaign.PlayerRoleId);
-            var player = campaign.Players.SingleOrDefault(cu => cu.User.DiscordId == newGameMaster.Id);
-            if (player != null)
-            {
-                await newGameMaster.RemoveRoleAsync(playerRole);
-                await newGameMaster.AddRoleAsync(gmRole);
-                campaign.Players.Remove(player);
-            }
-            else await newGameMaster.AddRoleAsync(gmRole);
+            await CampaignSocketUtils.SetGameMaster(Context, newGameMaster, campaign);
         
             var newGameMasterUser = await _userService.GetByDiscordUserId(newGameMaster.Id);
             campaign.GameMaster = new GameMaster { User = newGameMasterUser };
@@ -147,19 +130,9 @@ namespace GameMasterBot.Modules
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-
-            var textChannel = Context.Guild.TextChannels.FirstOrDefault(channel => channel.Id == campaign.TextChannelId);
-            if (textChannel != null) await Context.Guild.GetTextChannel(textChannel.Id).DeleteAsync();
-
-            var voiceChannel = Context.Guild.VoiceChannels.FirstOrDefault(channel => channel.Id == campaign.VoiceChannelId);
-            if (voiceChannel != null) await Context.Guild.GetVoiceChannel(voiceChannel.Id).DeleteAsync();
-
-            var campaignRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
-            if (campaignRole != null) await Context.Guild.GetRole(campaignRole.Id).DeleteAsync();
-
-            var gmRole = Context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
-            if (gmRole != null) await Context.Guild.GetRole(gmRole.Id).DeleteAsync();
-
+            
+            await CampaignSocketUtils.DeleteCampaign(Context, campaign);
+            
             await _campaignService.Remove(campaign.Id);
             
             return CommandResult.AsSuccess();

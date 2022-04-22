@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using GameMasterBot.DTO;
+using GameMasterBot.Models.Entities;
 
 namespace GameMasterBot.Utils;
 
@@ -62,8 +64,9 @@ public static class CampaignSocketUtils
             gameMasterRole.Id);
     }
 
-    private static Color RandomDiscordColor() =>
-        new Random().Next(19) switch
+    private static Color RandomDiscordColor()
+    {
+        return new Random().Next(19) switch
         {
             0 => Color.Blue,
             1 => Color.Green,
@@ -87,4 +90,49 @@ public static class CampaignSocketUtils
             19 => Color.LightOrange,
             _ => Color.Default
         };
+    }
+
+    public static async Task AddPlayer(SocketInteractionContext context, SocketGuildUser newPlayer, ulong playerRoleId)
+    {
+        var campaignRole = context.Guild.Roles.First(role => role.Id == playerRoleId);
+        await newPlayer.AddRoleAsync(campaignRole);
+    }
+    
+    public static async Task RemovePlayer(SocketInteractionContext context, SocketGuildUser playerToRemove, ulong playerRoleId)
+    {
+        var campaignRole = context.Guild.Roles.First(role => role.Id == playerRoleId);
+        await playerToRemove.RemoveRoleAsync(campaignRole);
+    }
+
+    public static async Task SetGameMaster(SocketInteractionContext context, SocketGuildUser newGameMaster, Campaign campaign)
+    {
+        var gmRole = context.Guild.Roles.First(r => r.Id == campaign.GameMasterRoleId);
+        var currentGmDiscord = context.Guild.GetUser(campaign.GameMaster.User.DiscordId);
+        if (currentGmDiscord != null) await currentGmDiscord.RemoveRoleAsync(gmRole);
+
+        var playerRole = context.Guild.Roles.First(r => r.Id == campaign.PlayerRoleId);
+        var player = campaign.Players.SingleOrDefault(cu => cu.User.DiscordId == newGameMaster.Id);
+        if (player != null)
+        {
+            await newGameMaster.RemoveRoleAsync(playerRole);
+            await newGameMaster.AddRoleAsync(gmRole);
+            campaign.Players.Remove(player);
+        }
+        else await newGameMaster.AddRoleAsync(gmRole);
+    }
+
+    public static async Task DeleteCampaign(SocketInteractionContext context, Campaign campaign)
+    {
+        var textChannel = context.Guild.TextChannels.FirstOrDefault(channel => channel.Id == campaign.TextChannelId);
+        if (textChannel != null) await context.Guild.GetTextChannel(textChannel.Id).DeleteAsync();
+
+        var voiceChannel = context.Guild.VoiceChannels.FirstOrDefault(channel => channel.Id == campaign.VoiceChannelId);
+        if (voiceChannel != null) await context.Guild.GetVoiceChannel(voiceChannel.Id).DeleteAsync();
+
+        var campaignRole = context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
+        if (campaignRole != null) await context.Guild.GetRole(campaignRole.Id).DeleteAsync();
+
+        var gmRole = context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.GameMasterRoleId);
+        if (gmRole != null) await context.Guild.GetRole(gmRole.Id).DeleteAsync();
+    }
 }
