@@ -20,24 +20,24 @@ public static class CampaignValidationMessages
     public static CommandValidationError CampaignAlreadyExists() =>
         new("A campaign with this name already exists on this server.");
 
-    public static CommandValidationError CannotAddGameMaster(string username) =>
-        new($"{username} is the game master for this campaign, so you cannot add them.");
+    public static CommandValidationError CannotAddGameMaster(ulong invalidGameMasterId) =>
+        new($"<@{invalidGameMasterId}> is the game master for this campaign, so you cannot add them.");
 
-    public static CommandValidationError CannotAddExistingPlayer(string username) =>
-        new($"{username} is already a player in this campaign.");
+    public static CommandValidationError CannotAddExistingPlayer(ulong existingPlayerId) =>
+        new($"<@{existingPlayerId}> is already a player in this campaign.");
     
-    public static CommandValidationError CannotRemoveNonPlayer(string username) =>
-        new($"{username} is not a player in this campaign.");
+    public static CommandValidationError CannotRemoveNonPlayer(ulong nonPlayerId) =>
+        new($"<@{nonPlayerId}> is not a player in this campaign.");
 
     public static CommandValidationError NoPlayerRole() =>
         new("I couldn't find the player role for this campaign in this server.");
     
-    public static CommandValidationError InvalidURL() =>
+    public static CommandValidationError InvalidUrl() =>
         new("The URL you entered is not valid a valid URL.");
     
     public static CommandValidationError NoGameMasterRole() =>
         new("I couldn't find the game master role for this campaign in this server.");
     
-    public static CommandValidationError CannotSetCurrentGameMaster(string username) =>
-        new($"'{username}' is already the game master for this campaign!");
+    public static CommandValidationError CannotSetCurrentGameMaster(ulong currentGameMasterId) =>
+        new($"'<@{currentGameMasterId}>' is already the game master for this campaign!");
 }

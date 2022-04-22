@@ -59,7 +59,7 @@ namespace GameMasterBot.Services
                 {
                     if (result is CommandResult commandResult && !string.IsNullOrEmpty(commandResult.ErrorReason))
                     {
-                        Console.WriteLine($"Handled error executing command [{slashCommandInfo.Name}] for user {interactionContext.User.Username} [Id: {interactionContext.User.Id}] [Reason: {commandResult.ErrorReason}]");
+                        Console.WriteLine($"{DateTime.Now:T} Handled error executing command [{slashCommandInfo.Name}] for user {interactionContext.User.Username} [Id: {interactionContext.User.Id}] [Reason: {commandResult.ErrorReason}]");
                         errorMessage = commandResult.ErrorReason;
                     }
                 }

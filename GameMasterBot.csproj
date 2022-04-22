@@ -23,12 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Modules\HelpModule.cs" />
-    <Compile Remove="Services\LoggingService.cs" />
-    <Compile Remove="CommandHandler.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Data\Migrations" />
   </ItemGroup>
 

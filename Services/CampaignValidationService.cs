@@ -45,7 +45,7 @@ public class CampaignValidationService
             return CommonValidationMessages.NotInCampaignChannel();
 
         if (newPlayer.Id == campaign.GameMaster.User.DiscordId)
-            return CampaignValidationMessages.CannotAddGameMaster(newPlayer.Username);
+            return CampaignValidationMessages.CannotAddGameMaster(newPlayer.Id);
 
         var commandIssuer = context.Guild.GetUser(context.User.Id);
         if (campaign.GameMaster.User.DiscordId != context.User.Id && !commandIssuer.GuildPermissions.Administrator)
@@ -57,7 +57,7 @@ public class CampaignValidationService
 
         var foundPlayer = campaign.Players.FirstOrDefault(cu => cu.User.DiscordId == newPlayer.Id);
         return foundPlayer != null ?
-            CampaignValidationMessages.CannotAddExistingPlayer(newPlayer.Username) :
+            CampaignValidationMessages.CannotAddExistingPlayer(newPlayer.Id) :
             null;
     }
     
@@ -73,7 +73,7 @@ public class CampaignValidationService
 
         var foundPlayer = campaign.Players.FirstOrDefault(cu => cu.User.DiscordId == playerToRemove.Id);
         if (foundPlayer == null)
-            return CampaignValidationMessages.CannotRemoveNonPlayer(playerToRemove.Username);
+            return CampaignValidationMessages.CannotRemoveNonPlayer(playerToRemove.Id);
             
         var campaignRole = context.Guild.Roles.FirstOrDefault(role => role.Id == campaign.PlayerRoleId);
         return campaignRole == null ?
@@ -91,7 +91,7 @@ public class CampaignValidationService
         if (campaign.GameMaster.User.DiscordId != context.User.Id && !commandIssuer.GuildPermissions.Administrator)
             return CommonValidationMessages.NotGameMasterOrAdmin();
 
-        return !Uri.IsWellFormedUriString(url, UriKind.Absolute) ? CampaignValidationMessages.InvalidURL() : null;
+        return !Uri.IsWellFormedUriString(url, UriKind.Absolute) ? CampaignValidationMessages.InvalidUrl() : null;
     }
     
     public async Task<CommandValidationError> ValidateSetGameMaster(SocketInteractionContext context, IUser newGameMaster)
@@ -105,7 +105,7 @@ public class CampaignValidationService
             return CommonValidationMessages.NotGameMasterOrAdmin();
 
         if (campaign.GameMaster.User.DiscordId == newGameMaster.Id)
-            return CampaignValidationMessages.CannotSetCurrentGameMaster(newGameMaster.Username);
+            return CampaignValidationMessages.CannotSetCurrentGameMaster(newGameMaster.Id);
 
         if (context.Guild.Roles.All(role => role.Id != campaign.GameMasterRoleId))
             return CampaignValidationMessages.NoGameMasterRole();

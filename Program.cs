@@ -71,7 +71,7 @@ namespace GameMasterBot
             {
                 // Add the commands to a specific test Guild immediately
                 var testGuildId = Environment.GetEnvironmentVariable("TEST_GUILD_ID");
-                Console.WriteLine($"In debug mode, adding commands to {testGuildId}...");
+                Console.WriteLine($"{DateTime.Now:T} In debug mode, adding commands to {testGuildId}...");
                 await _interactionService.RegisterCommandsToGuildAsync(Convert.ToUInt64(testGuildId));
             }
             else
@@ -79,8 +79,8 @@ namespace GameMasterBot
                 // Add the commands globally, will take around an hour
                 await _interactionService.RegisterCommandsGloballyAsync();
             }
-            Console.WriteLine($"Connected as -> [{_client.CurrentUser}]");
-            Console.WriteLine($"I am on [{_client.Guilds.Count}] guilds");
+            Console.WriteLine($"{DateTime.Now:T} Connected as -> [{_client.CurrentUser}]");
+            Console.WriteLine($"{DateTime.Now:T} I am on [{_client.Guilds.Count}] guilds");
         }
     }
 }

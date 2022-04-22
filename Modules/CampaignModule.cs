@@ -28,7 +28,7 @@ namespace GameMasterBot.Modules
 
         [RequireRoleOrAdmin("Whitelisted")]
         [SlashCommand("create", "Create a new campaign on this server, including new channels and roles.")]
-        public async Task<RuntimeResult> CreateCampaignAsync(
+        public async Task<RuntimeResult> CreateAsync(
             [Summary("campaign-name", "The name of your new campaign.")] string campaignName,
             [Summary("game-system", "The name of the game system you will use for your new campaign.")] string gameSystem)
         {
@@ -63,7 +63,7 @@ namespace GameMasterBot.Modules
             
             await CampaignSocketUtils.AddPlayer(Context, newPlayer, campaign.PlayerRoleId);
             
-            await RespondAsync($"Successfully added {newPlayer.Username} to this campaign as a new player.", embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(CampaignResponseMessages.PlayerSuccessfullyAdded(newPlayer.Id), embed: BotEmbeds.CampaignInfo(campaign));
             return CommandResult.AsSuccess();
         }
 
@@ -80,7 +80,7 @@ namespace GameMasterBot.Modules
 
             await CampaignSocketUtils.RemovePlayer(Context, playerToRemove, campaign.PlayerRoleId);
 
-            await RespondAsync($"Successfully removed {playerToRemove.Username} from this campaign.", embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(CampaignResponseMessages.PlayerSuccessfullyRemoved(playerToRemove.Id), embed: BotEmbeds.CampaignInfo(campaign), ephemeral: true);
             return CommandResult.AsSuccess();
         }
 
@@ -96,7 +96,7 @@ namespace GameMasterBot.Modules
             campaign.Url = url;
             campaign = await _campaignService.Update(campaign);
             
-            await RespondAsync("Successfully set the URL for this campaign.", embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(CampaignResponseMessages.UrlSuccessfullySet(), embed: BotEmbeds.CampaignInfo(campaign), ephemeral: true);
             return CommandResult.AsSuccess();
         }
 
@@ -116,13 +116,13 @@ namespace GameMasterBot.Modules
             campaign.GameMaster = new GameMaster { User = newGameMasterUser };
             campaign = await _campaignService.Update(campaign);
             
-            await RespondAsync($"Successfully assigned {newGameMaster.Username} as the game master for this campaign.", embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(CampaignResponseMessages.GameMasterSuccessfullySet(newGameMaster.Id), embed: BotEmbeds.CampaignInfo(campaign));
             return CommandResult.AsSuccess();
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
         [SlashCommand("delete", "Deletes this campaign from the server, including channels and roles.")]
-        public async Task<RuntimeResult> DeleteCampaignAsync()
+        public async Task<RuntimeResult> DeleteAsync()
         {
             await DeferAsync(ephemeral: true);
             
@@ -139,7 +139,7 @@ namespace GameMasterBot.Modules
         }
         
         [SlashCommand("info", "Displays all information about this campaign.")]
-        public async Task<RuntimeResult> CampaignInfoAsync()
+        public async Task<RuntimeResult> InfoAsync()
         {
             var commandValidationError = await _validationService.ValidateCampaignInfoCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
