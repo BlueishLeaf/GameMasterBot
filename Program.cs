@@ -49,14 +49,16 @@ namespace GameMasterBot
         }
 
         private ServiceProvider BuildServiceProvider() => new ServiceCollection()
+            .AddDbContext<GameMasterBotContext>()
             .AddSingleton(_client)
             .AddSingleton(_interactionService)
             .AddSingleton<InteractionHandler>()
-            .AddDbContext<GameMasterBotContext>()
-            .AddSingleton<UserService>()
-            .AddSingleton<CampaignService>()
-            .AddSingleton<SessionService>()
-            .AddSingleton<CampaignValidationService>()
+            .AddSingleton<SessionScheduler>()
+            .AddScoped<IUserService, UserService>()
+            .AddScoped<ICampaignService, CampaignService>()
+            .AddScoped<ICampaignValidationService, CampaignValidationService>()
+            .AddScoped<ISessionService, SessionService>()
+            .AddScoped<ISessionSchedulingService, SessionSchedulingService>()
             .BuildServiceProvider();
         
         private static Task LogAsync(LogMessage logMessage)

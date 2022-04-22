@@ -5,7 +5,7 @@ using GameMasterBot.Models.Entities;
 
 namespace GameMasterBot.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly GameMasterBotContext _context;
 
@@ -15,7 +15,8 @@ namespace GameMasterBot.Services
         {
             var user = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = discordUserId
+                DiscordId = discordUserId,
+                TimeZoneId = "UTC"
             }, u => u.DiscordId == discordUserId);
             
             await _context.SaveChangesAsync();
@@ -26,7 +27,8 @@ namespace GameMasterBot.Services
         {
             var userDb = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = discordUserId
+                DiscordId = discordUserId,
+                TimeZoneId = "UTC"
             }, u => u.DiscordId == discordUserId);
             
             userDb.TimeZoneId = timezone;

@@ -11,11 +11,11 @@ using GameMasterBot.Messages;
 
 namespace GameMasterBot.Services;
 
-public class CampaignValidationService
+public class CampaignValidationService : ICampaignValidationService
 {
-    private readonly CampaignService _campaignService;
+    private readonly ICampaignService _campaignService;
 
-    public CampaignValidationService(CampaignService campaignService) => _campaignService = campaignService;
+    public CampaignValidationService(ICampaignService campaignService) => _campaignService = campaignService;
 
     public async Task<CommandValidationError> ValidateCreateCampaignCommand(SocketInteractionContext context, CreateSocketCampaignDto createSocketCampaignDto)
     {

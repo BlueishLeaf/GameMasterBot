@@ -10,11 +10,11 @@ namespace GameMasterBot.Modules
     [Group("timezone", "Commands for managing users' timezones.")]
     public class TimezoneModule : InteractionModuleBase<SocketInteractionContext>
     {
-        private readonly UserService _userService;
+        private readonly IUserService _userService;
         
-        public TimezoneModule(UserService userService) => _userService = userService;
+        public TimezoneModule(IUserService userService) => _userService = userService;
 
-        [SlashCommand("view", "View the timezone that you have set for yourself.")]
+        [SlashCommand("view", "Displays the timezone that you have set for yourself.")]
         public async Task<RuntimeResult> TimezoneAsync()
         {
             var user = await _userService.GetByDiscordUserId(Context.User.Id);
@@ -39,7 +39,7 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        [SlashCommand("set", "Set your timezone to make scheduling sessions easier.")]
+        [SlashCommand("set", "Sets your timezone to make scheduling sessions easier.")]
         public async Task<RuntimeResult> SetTimezoneAsync(
             [Summary("timezone", "Your IANA timezone (case-sensitive). Use '/timezone list' to find your IANA timezone.")] string tz)
         {
@@ -57,18 +57,18 @@ namespace GameMasterBot.Modules
 
             await _userService.UpdateTimezone(Context.User.Id, tzInfo.Id);
 
-            await RespondAsync($"Successfully set your timezone to {tzInfo.StandardName}.", ephemeral: true);
+            await RespondAsync($"Successfully set your timezone to {tzInfo.Id}.", ephemeral: true);
             return CommandResult.AsSuccess();
         }
         
-        [SlashCommand("list", "Display all timezones compatible with this bot.")]
+        [SlashCommand("view-all", "Displays all timezones compatible with this bot.")]
         public async Task<RuntimeResult> ShowTimezonesAsync()
         {
             await RespondAsync("View timezones compatible with '/set-timezone' here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones", ephemeral: true);
             return CommandResult.AsSuccess();
         }
         
-        [SlashCommand("convert", "Convert a UTC time to your local time.")]
+        [SlashCommand("convert", "Converts a UTC time to your local time.")]
         public async Task<RuntimeResult> ConvertAsync(
             [Summary("utc-time", "The time in UTC that you want to convert.")] string utcTime)
         {

@@ -37,8 +37,8 @@ public static class CampaignSocketUtils
 
         // Set the permissions on the campaign's text channel
         await campaignTextChannel.AddPermissionOverwriteAsync(context.Guild.EveryoneRole, new OverwritePermissions(readMessageHistory: PermValue.Deny, sendMessages: PermValue.Deny, viewChannel: PermValue.Deny));
-        await campaignTextChannel.AddPermissionOverwriteAsync(playerRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow, addReactions: PermValue.Allow));
-        await campaignTextChannel.AddPermissionOverwriteAsync(gameMasterRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, manageMessages: PermValue.Allow, manageChannel: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow));
+        await campaignTextChannel.AddPermissionOverwriteAsync(playerRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow, addReactions: PermValue.Allow, embedLinks: PermValue.Allow));
+        await campaignTextChannel.AddPermissionOverwriteAsync(gameMasterRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, manageMessages: PermValue.Allow, addReactions: PermValue.Allow, manageChannel: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow, embedLinks: PermValue.Allow));
 
         // Create the voice channel for this campaign if one does not exist
         var campaignVoiceChannel = context.Guild.VoiceChannels.FirstOrDefault(chan => chan.Name == createSocketCampaignDto.CampaignName) ??

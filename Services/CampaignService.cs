@@ -10,20 +10,21 @@ using GameMasterBot.DTO;
 
 namespace GameMasterBot.Services
 {
-    public class CampaignService
+    public class CampaignService : ICampaignService
     {
         private readonly GameMasterBotContext _context;
         
         public CampaignService(GameMasterBotContext context) => _context = context;
         
-        public async Task<Campaign> GetByTextChannelId(ulong textChannelId) => 
-            await _context.Campaigns.AsQueryable()
-                .Include(c => c.Sessions)
+        public async Task<Campaign> GetByTextChannelId(ulong textChannelId)
+        {
+            // await using var dbContext = new GameMasterBotContext();
+            return await _context.Campaigns.Include(c => c.Sessions)
                 .SingleOrDefaultAsync(c => c.TextChannelId == textChannelId);
-        
+        }
+
         public async Task<IEnumerable<Campaign>> GetAllByGuildId(ulong guildId) => 
-            await _context.Campaigns.AsQueryable()
-                .Include(c => c.Guild)
+            await _context.Campaigns.Include(c => c.Guild)
                 .Where(c => c.Guild.DiscordId == guildId)
                 .ToListAsync();
         
@@ -31,7 +32,8 @@ namespace GameMasterBot.Services
         {
             var userDb = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = createCampaignDto.UserDiscordId
+                DiscordId = createCampaignDto.UserDiscordId,
+                TimeZoneId = "UTC"
             }, u => u.DiscordId == createCampaignDto.UserDiscordId);
             
             var guildDb = await _context.Guilds.FetchOrAddIfNotExists(new Guild
@@ -58,10 +60,11 @@ namespace GameMasterBot.Services
 
         public async Task<Campaign> AddPlayer(long id, ulong playerDiscordId)
         {
-            var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
+            var campaign = await _context.Campaigns.SingleAsync(c => c.Id == id);
             var user = await _context.Users.FetchOrAddIfNotExists(new User
             {
-                DiscordId = playerDiscordId
+                DiscordId = playerDiscordId,
+                TimeZoneId = "UTC"
             }, u => u.DiscordId == playerDiscordId);
             campaign.Players.Add(new CampaignPlayer { User = user });
             await _context.SaveChangesAsync();
@@ -70,7 +73,7 @@ namespace GameMasterBot.Services
         
         public async Task<Campaign> RemovePlayer(long id, ulong playerDiscordId)
         {
-            var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
+            var campaign = await _context.Campaigns.SingleAsync(c => c.Id == id);
             var campaignPlayer = campaign.Players.Single(p => p.User.DiscordId == playerDiscordId);
             campaign.Players.Remove(campaignPlayer);
             await _context.SaveChangesAsync();
@@ -84,9 +87,9 @@ namespace GameMasterBot.Services
             return campaign;
         }
 
-        public async Task Remove(long id)
+        public async Task DeleteById(long id)
         {
-            var campaign = await _context.Campaigns.AsQueryable().SingleAsync(c => c.Id == id);
+            var campaign = await _context.Campaigns.SingleAsync(c => c.Id == id);
             _context.Campaigns.Remove(campaign);
             await _context.SaveChangesAsync();
         }

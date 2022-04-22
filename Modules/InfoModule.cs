@@ -25,7 +25,7 @@ namespace GameMasterBot.Modules
         [SlashCommand("tutorial", "Displays a brief overview of how to use this bot.")]
         public async Task<RuntimeResult> ShowOverviewAsync()
         {
-            await RespondAsync(embed: BotEmbeds.Overview(), ephemeral: true);
+            await RespondAsync(embed: BotEmbeds.Tutorial(), ephemeral: true);
             return CommandResult.AsSuccess();
         }
     }
