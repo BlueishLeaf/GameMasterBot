@@ -4,35 +4,35 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using GameMasterBot.DTO;
+using GameMasterBot.DTOs;
 using GameMasterBot.Models.Entities;
 
 namespace GameMasterBot.Utils;
 
 public static class CampaignSocketUtils
 {
-    public static async Task<CreateCampaignDto> CreateSocketCampaign(SocketInteractionContext context, CreateSocketCampaignDto createSocketCampaignDto)
+    public static async Task<CreateCampaignDto> CreateSocketCampaign(SocketInteractionContext context, CreateCampaignCommandDto createCampaignCommandDto)
     {
         var roleColor = RandomDiscordColor();
 
-        var playerRole = context.Guild.Roles.FirstOrDefault(role => role.Name == $"Player: {createSocketCampaignDto.CampaignName}") ??
-                         (IRole)context.Guild.CreateRoleAsync($"Player: {createSocketCampaignDto.CampaignName}", null, roleColor, false, true).Result;
+        var playerRole = context.Guild.Roles.FirstOrDefault(role => role.Name == $"Player: {createCampaignCommandDto.CampaignName}") ??
+                         (IRole)context.Guild.CreateRoleAsync($"Player: {createCampaignCommandDto.CampaignName}", null, roleColor, false, true).Result;
         
-        var gameMasterRole = context.Guild.Roles.FirstOrDefault(role => role.Name == $"Game Master: {createSocketCampaignDto.CampaignName}") ??
-                         (IRole)context.Guild.CreateRoleAsync($"Game Master: {createSocketCampaignDto.CampaignName}", null, roleColor, false, true).Result;
+        var gameMasterRole = context.Guild.Roles.FirstOrDefault(role => role.Name == $"Game Master: {createCampaignCommandDto.CampaignName}") ??
+                         (IRole)context.Guild.CreateRoleAsync($"Game Master: {createCampaignCommandDto.CampaignName}", null, roleColor, false, true).Result;
         
         // Create the category channel for this campaign's system if one does not already exist
-        var campaignCategoryChannel = context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == createSocketCampaignDto.GameSystem) ??
-                                          (ICategoryChannel)context.Guild.CreateCategoryChannelAsync(createSocketCampaignDto.GameSystem).Result;
+        var campaignCategoryChannel = context.Guild.CategoryChannels.FirstOrDefault(cat => cat.Name == createCampaignCommandDto.GameSystem) ??
+                                          (ICategoryChannel)context.Guild.CreateCategoryChannelAsync(createCampaignCommandDto.GameSystem).Result;
 
-        var textChannelName = createSocketCampaignDto.CampaignName.ToLower().Replace(' ', '-');
+        var textChannelName = createCampaignCommandDto.CampaignName.ToLower().Replace(' ', '-');
 
         // Create the text channel for this campaign if one does not exist
         var campaignTextChannel = context.Guild.TextChannels.FirstOrDefault(chan => chan.Name == textChannelName) ??
                                   (ITextChannel)context.Guild.CreateTextChannelAsync(textChannelName, channel =>
                                   {
                                       channel.CategoryId = campaignCategoryChannel.Id;
-                                      channel.Topic = $"Channel for discussing the {createSocketCampaignDto.GameSystem} campaign '{createSocketCampaignDto.CampaignName}'.";
+                                      channel.Topic = $"Channel for discussing the {createCampaignCommandDto.GameSystem} campaign '{createCampaignCommandDto.CampaignName}'.";
                                   }).Result;
 
         // Set the permissions on the campaign's text channel
@@ -41,8 +41,8 @@ public static class CampaignSocketUtils
         await campaignTextChannel.AddPermissionOverwriteAsync(gameMasterRole, new OverwritePermissions(sendMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, manageMessages: PermValue.Allow, addReactions: PermValue.Allow, manageChannel: PermValue.Allow, viewChannel: PermValue.Allow, attachFiles: PermValue.Allow, embedLinks: PermValue.Allow));
 
         // Create the voice channel for this campaign if one does not exist
-        var campaignVoiceChannel = context.Guild.VoiceChannels.FirstOrDefault(chan => chan.Name == createSocketCampaignDto.CampaignName) ??
-                                   (IVoiceChannel)context.Guild.CreateVoiceChannelAsync(createSocketCampaignDto.CampaignName,
+        var campaignVoiceChannel = context.Guild.VoiceChannels.FirstOrDefault(chan => chan.Name == createCampaignCommandDto.CampaignName) ??
+                                   (IVoiceChannel)context.Guild.CreateVoiceChannelAsync(createCampaignCommandDto.CampaignName,
                                        channel => channel.CategoryId = campaignCategoryChannel.Id).Result;
 
         // Set the permissions on the campaign's voice channel
@@ -54,8 +54,8 @@ public static class CampaignSocketUtils
         await context.Guild.Users.First(user => user.Id == context.User.Id).AddRoleAsync(gameMasterRole);
 
         return new CreateCampaignDto(
-            createSocketCampaignDto.CampaignName,
-            createSocketCampaignDto.GameSystem,
+            createCampaignCommandDto.CampaignName,
+            createCampaignCommandDto.GameSystem,
             context.User.Id,
             context.Guild.Id,
             campaignTextChannel.Id,

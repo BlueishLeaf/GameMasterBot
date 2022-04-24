@@ -5,35 +5,36 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using GameMasterBot.Constants;
-using GameMasterBot.DTO;
+using GameMasterBot.DTOs;
 using GameMasterBot.Extensions;
 using GameMasterBot.Messages;
+using GameMasterBot.Services.Interfaces;
 
 namespace GameMasterBot.Services;
 
-public class CampaignValidationService : ICampaignValidationService
+public class CampaignCommandValidator
 {
     private readonly ICampaignService _campaignService;
 
-    public CampaignValidationService(ICampaignService campaignService) => _campaignService = campaignService;
+    public CampaignCommandValidator(ICampaignService campaignService) => _campaignService = campaignService;
 
-    public async Task<CommandValidationError> ValidateCreateCampaignCommand(SocketInteractionContext context, CreateSocketCampaignDto createSocketCampaignDto)
+    public async Task<CommandValidationError> ValidateCreateCampaignCommand(SocketInteractionContext context, CreateCampaignCommandDto createCampaignCommandDto)
     {
-        if (createSocketCampaignDto.CampaignName.Length > CampaignValidationConstants.NameMaxLength)
+        if (createCampaignCommandDto.CampaignName.Length > CampaignValidationConstants.NameMaxLength)
             return CampaignValidationMessages.InvalidNameLength();
 
         var channelRegex = new Regex(CampaignValidationConstants.NameRegexPattern);
-        if (!channelRegex.IsMatch(createSocketCampaignDto.CampaignName))
+        if (!channelRegex.IsMatch(createCampaignCommandDto.CampaignName))
             return CampaignValidationMessages.InvalidNamePattern();
 
-        if (createSocketCampaignDto.GameSystem.Length > CampaignValidationConstants.NameMaxLength)
+        if (createCampaignCommandDto.GameSystem.Length > CampaignValidationConstants.NameMaxLength)
             return CampaignValidationMessages.InvalidSystemLength();
 
-        if (!channelRegex.IsMatch(createSocketCampaignDto.GameSystem))
+        if (!channelRegex.IsMatch(createCampaignCommandDto.GameSystem))
             return CampaignValidationMessages.InvalidSystemPattern();
 
         var guildCampaigns = await _campaignService.GetAllByGuildId(context.Guild.Id);
-        return guildCampaigns.Any(c => c.Name == createSocketCampaignDto.CampaignName)
+        return guildCampaigns.Any(c => c.Name == createCampaignCommandDto.CampaignName)
             ? CampaignValidationMessages.CampaignAlreadyExists()
             : null;
     }

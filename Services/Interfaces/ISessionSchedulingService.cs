@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using GameMasterBot.Models.Entities;
 
-namespace GameMasterBot.Services;
+namespace GameMasterBot.Services.Interfaces;
 
 public interface ISessionSchedulingService
 {

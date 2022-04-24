@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using GameMasterBot.DTO;
+using GameMasterBot.DTOs;
 using GameMasterBot.Models.Entities;
 
-namespace GameMasterBot.Services;
+namespace GameMasterBot.Services.Interfaces;
 
 public interface ICampaignService
 {

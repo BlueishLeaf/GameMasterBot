@@ -7,6 +7,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using GameMasterBot.Data;
 using GameMasterBot.Services;
+using GameMasterBot.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -54,9 +55,10 @@ namespace GameMasterBot
             .AddSingleton(_interactionService)
             .AddSingleton<InteractionHandler>()
             .AddSingleton<SessionScheduler>()
+            .AddSingleton<CampaignCommandValidator>()
+            .AddSingleton<SessionCommandValidator>()
             .AddScoped<IUserService, UserService>()
             .AddScoped<ICampaignService, CampaignService>()
-            .AddScoped<ICampaignValidationService, CampaignValidationService>()
             .AddScoped<ISessionService, SessionService>()
             .AddScoped<ISessionSchedulingService, SessionSchedulingService>()
             .BuildServiceProvider();

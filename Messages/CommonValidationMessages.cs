@@ -2,7 +2,7 @@
 
 namespace GameMasterBot.Messages;
 
-public class CommonValidationMessages
+public static class CommonValidationMessages
 {
     public static CommandValidationError NotInCampaignChannel() =>
         new("You must be in your campaign's text channel to use this command.");

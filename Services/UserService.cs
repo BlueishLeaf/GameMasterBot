@@ -2,6 +2,7 @@
 using GameMasterBot.Data;
 using GameMasterBot.Extensions;
 using GameMasterBot.Models.Entities;
+using GameMasterBot.Services.Interfaces;
 
 namespace GameMasterBot.Services
 {

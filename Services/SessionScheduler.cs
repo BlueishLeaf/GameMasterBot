@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using GameMasterBot.Models.Entities;
 using GameMasterBot.Models.Enums;
+using GameMasterBot.Services.Interfaces;
 
 namespace GameMasterBot.Services;
 

@@ -6,7 +6,8 @@ using GameMasterBot.Extensions;
 using GameMasterBot.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using GameMasterBot.DTO;
+using GameMasterBot.DTOs;
+using GameMasterBot.Services.Interfaces;
 
 namespace GameMasterBot.Services
 {

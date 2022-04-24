@@ -1,7 +1,10 @@
 ﻿using System.Threading.Tasks;
 using Discord.Interactions;
-using GameMasterBot.Embeds;
 using GameMasterBot.Extensions;
+using GameMasterBot.Utils;
+// Modules and their methods are picked up by the handler but not recognised by Rider
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
 {
@@ -25,7 +28,7 @@ namespace GameMasterBot.Modules
         [SlashCommand("tutorial", "Displays a brief overview of how to use this bot.")]
         public async Task<RuntimeResult> ShowOverviewAsync()
         {
-            await RespondAsync(embed: BotEmbeds.Tutorial(), ephemeral: true);
+            await RespondAsync(embed: InfoEmbedBuilder.BuildTutorialEmbed(), ephemeral: true);
             return CommandResult.AsSuccess();
         }
     }

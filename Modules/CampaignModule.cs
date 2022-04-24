@@ -1,42 +1,46 @@
 ﻿using System.Threading.Tasks;
 using Discord.Interactions;
 using Discord.WebSocket;
-using GameMasterBot.DTO;
-using GameMasterBot.Embeds;
+using GameMasterBot.Constants;
+using GameMasterBot.DTOs;
 using GameMasterBot.Extensions;
 using GameMasterBot.Messages;
 using GameMasterBot.Models.Entities;
 using GameMasterBot.Services;
+using GameMasterBot.Services.Interfaces;
 using GameMasterBot.Utils;
+// Modules and their methods are picked up by the handler but not recognised by Rider
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
 {
     [RequireContext(ContextType.Guild)]
-    [Group("campaign", "Commands for managing the campaigns on your server.")]
+    [Group(CampaignCommands.GroupName, CampaignCommands.GroupDescription)]
     public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     {
-        private readonly ICampaignValidationService _validationService;
+        private readonly CampaignCommandValidator _validator;
         private readonly ICampaignService _campaignService;
         private readonly IUserService _userService;
         
-        public CampaignModule(ICampaignValidationService validationService, ICampaignService campaignService, IUserService userService)
+        public CampaignModule(CampaignCommandValidator validator, ICampaignService campaignService, IUserService userService)
         {
-            _validationService = validationService;
+            _validator = validator;
             _campaignService = campaignService;
             _userService = userService;
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("create", "Creates a new campaign on this server, including new channels and roles.")]
+        [SlashCommand(CampaignCommands.CreateCommandName, CampaignCommands.CreateCommandDescription)]
         public async Task<RuntimeResult> CreateCampaignAsync(
-            [Summary("campaign-name", "The name of your new campaign.")] string campaignName,
-            [Summary("game-system", "The name of the game system you will use for your new campaign.")] string gameSystem)
+            [Summary(CampaignCommands.CreateCommandParamCampaignNameName, CampaignCommands.CreateCommandParamCampaignNameDescription)] string campaignName,
+            [Summary(CampaignCommands.CreateCommandParamGameSystemName, CampaignCommands.CreateCommandParamGameSystemDescription)] string gameSystem)
         {
             await DeferAsync(ephemeral: true);
 
-            var createSocketCampaignDto = new CreateSocketCampaignDto(campaignName, gameSystem);
+            var createSocketCampaignDto = new CreateCampaignCommandDto(campaignName, gameSystem);
 
-            var commandValidationError = await _validationService.ValidateCreateCampaignCommand(Context, createSocketCampaignDto);
+            var commandValidationError = await _validator.ValidateCreateCampaignCommand(Context, createSocketCampaignDto);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
 
             var createCampaignDto = await CampaignSocketUtils.CreateSocketCampaign(Context, createSocketCampaignDto);
@@ -45,34 +49,34 @@ namespace GameMasterBot.Modules
             await ModifyOriginalResponseAsync(message =>
             {
                 message.Content = CampaignResponseMessages.CampaignSuccessfullyCreated(campaign.TextChannelId);
-                message.Embed = BotEmbeds.CampaignInfo(campaign);
+                message.Embed = CampaignEmbedBuilder.BuildCampaignEmbed(campaign);
             });
             return CommandResult.AsSuccess();
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("add-player", "Adds a new player to this campaign.")]
+        [SlashCommand(CampaignCommands.AddPlayerCommandName, CampaignCommands.AddPlayerCommandDescription)]
         public async Task<RuntimeResult> AddPlayerAsync(
-            [Summary("player", "The person that you want to add as a player to this campaign.")] SocketGuildUser newPlayer)
+            [Summary(CampaignCommands.AddPlayerCommandParamNewPlayerName, CampaignCommands.AddPlayerCommandParamNewPlayerDescription)] SocketGuildUser playerToAdd)
         {
-            var commandValidationError = await _validationService.ValidateAddPlayerCommand(Context, newPlayer);
+            var commandValidationError = await _validator.ValidateAddPlayerCommand(Context, playerToAdd);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            campaign = await _campaignService.AddPlayer(campaign.Id, newPlayer.Id);
+            campaign = await _campaignService.AddPlayer(campaign.Id, playerToAdd.Id);
             
-            await CampaignSocketUtils.AddPlayer(Context, newPlayer, campaign.PlayerRoleId);
+            await CampaignSocketUtils.AddPlayer(Context, playerToAdd, campaign.PlayerRoleId);
             
-            await RespondAsync(CampaignResponseMessages.PlayerSuccessfullyAdded(newPlayer.Id), embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(CampaignResponseMessages.PlayerSuccessfullyAdded(playerToAdd.Id), embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign));
             return CommandResult.AsSuccess();
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("remove-player", "Removes a player from this campaign.")]
+        [SlashCommand(CampaignCommands.RemovePlayerCommandName, CampaignCommands.RemovePlayerCommandDescription)]
         public async Task<RuntimeResult> RemovePlayerAsync(
-            [Summary("player", "The person that you want to remove as a player from this campaign.")] SocketGuildUser playerToRemove)
+            [Summary(CampaignCommands.RemovePlayerCommandParamPlayerToRemoveName, CampaignCommands.RemovePlayerCommandParamPlayerToRemoveDescription)] SocketGuildUser playerToRemove)
         {
-            var commandValidationError = await _validationService.ValidateRemovePlayerCommand(Context, playerToRemove);
+            var commandValidationError = await _validator.ValidateRemovePlayerCommand(Context, playerToRemove);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
@@ -80,32 +84,32 @@ namespace GameMasterBot.Modules
 
             await CampaignSocketUtils.RemovePlayer(Context, playerToRemove, campaign.PlayerRoleId);
 
-            await RespondAsync(CampaignResponseMessages.PlayerSuccessfullyRemoved(playerToRemove.Id), embed: BotEmbeds.CampaignInfo(campaign), ephemeral: true);
+            await RespondAsync(CampaignResponseMessages.PlayerSuccessfullyRemoved(playerToRemove.Id), embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign), ephemeral: true);
             return CommandResult.AsSuccess();
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("set-url", "Sets the URL for this campaign where players can access the game online.")]
+        [SlashCommand(CampaignCommands.SetUrlCommandName, CampaignCommands.SetUrlCommandDescription)]
         public async Task<RuntimeResult> SetUrlAsync(
-            [Summary("url", "The URL of the campaign.")] string url)
+            [Summary(CampaignCommands.SetUrlCommandParamGameUrlName, CampaignCommands.SetUrlCommandParamGameUrlDescription)] string gameUrl)
         {
-            var commandValidationError = await _validationService.ValidateSetUrlCommand(Context, url);
+            var commandValidationError = await _validator.ValidateSetUrlCommand(Context, gameUrl);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            campaign.Url = url;
+            campaign.Url = gameUrl;
             campaign = await _campaignService.Update(campaign);
             
-            await RespondAsync(CampaignResponseMessages.UrlSuccessfullySet(), embed: BotEmbeds.CampaignInfo(campaign), ephemeral: true);
+            await RespondAsync(CampaignResponseMessages.UrlSuccessfullySet(), embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign), ephemeral: true);
             return CommandResult.AsSuccess();
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("set-game-master", "Assigns a new game master for this campaign.")]
+        [SlashCommand(CampaignCommands.SetGameMasterCommandName, CampaignCommands.SetGameMasterCommandDescription)]
         public async Task<RuntimeResult> SetGameMasterAsync(
-            [Summary("game-master", "The person that you want to assign as the new game master for this campaign.")] SocketGuildUser newGameMaster)
+            [Summary(CampaignCommands.SetGameMasterCommandParamNewGameMasterName, CampaignCommands.SetGameMasterCommandParamNewGameMasterDescription)] SocketGuildUser newGameMaster)
         {
-            var commandValidationError = await _validationService.ValidateSetGameMaster(Context, newGameMaster);
+            var commandValidationError = await _validator.ValidateSetGameMaster(Context, newGameMaster);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
@@ -116,17 +120,17 @@ namespace GameMasterBot.Modules
             campaign.GameMaster = new GameMaster { User = newGameMasterUser };
             campaign = await _campaignService.Update(campaign);
             
-            await RespondAsync(CampaignResponseMessages.GameMasterSuccessfullySet(newGameMaster.Id), embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(CampaignResponseMessages.GameMasterSuccessfullySet(newGameMaster.Id), embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign));
             return CommandResult.AsSuccess();
         }
 
         [RequireRoleOrAdmin("Whitelisted")]
-        [SlashCommand("delete", "Deletes this campaign from the server, including channels and roles.")]
+        [SlashCommand(CampaignCommands.DeleteCommandName, CampaignCommands.DeleteCommandDescription)]
         public async Task<RuntimeResult> DeleteCampaignAsync()
         {
             await DeferAsync(ephemeral: true);
             
-            var commandValidationError = await _validationService.ValidateDeleteCampaignCommand(Context);
+            var commandValidationError = await _validator.ValidateDeleteCampaignCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
@@ -138,15 +142,15 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
         
-        [SlashCommand("view-info", "Displays a brief overview of this campaign.")]
-        public async Task<RuntimeResult> ViewInfoAsync()
+        [SlashCommand(CampaignCommands.ViewDetailsCommandName, CampaignCommands.ViewDetailsCommandDescription)]
+        public async Task<RuntimeResult> ViewDetailsAsync()
         {
-            var commandValidationError = await _validationService.ValidateCampaignInfoCommand(Context);
+            var commandValidationError = await _validator.ValidateCampaignInfoCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
                 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
 
-            await RespondAsync(embed: BotEmbeds.CampaignInfo(campaign));
+            await RespondAsync(embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign));
             return CommandResult.AsSuccess();
         }
     }

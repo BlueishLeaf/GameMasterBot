@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using GameMasterBot.Models.Entities;
 using GameMasterBot.Models.Enums;
 
-namespace GameMasterBot.Services;
+namespace GameMasterBot.Services.Interfaces;
 
 public interface ISessionService
 {

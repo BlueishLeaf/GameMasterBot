@@ -1,6 +1,4 @@
-﻿using Discord.WebSocket;
-
-namespace GameMasterBot.DTO;
+﻿namespace GameMasterBot.DTOs;
 
 public record CreateCampaignDto(
     string Name,

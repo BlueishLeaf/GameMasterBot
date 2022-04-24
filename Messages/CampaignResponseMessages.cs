@@ -12,7 +12,7 @@ public static class CampaignResponseMessages
         $"Successfully removed <@{removedPlayerId}> from this campaign.";
 
     public static string UrlSuccessfullySet() =>
-        "Successfully set the URL for this campaign.";
+        "Successfully set the URL for this campaign!";
     
     public static string GameMasterSuccessfullySet(ulong newGameMasterId) =>
         $"Successfully set <@{newGameMasterId}> as the new game master for this campaign!";

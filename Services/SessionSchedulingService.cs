@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using GameMasterBot.Data;
 using GameMasterBot.Models.Entities;
 using GameMasterBot.Models.Enums;
+using GameMasterBot.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameMasterBot.Services;
