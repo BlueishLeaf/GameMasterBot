@@ -10,12 +10,12 @@ public static class SessionValidationMessages
     public static CommandValidationError DateIsInPast() =>
         new("You cannot schedule a session in the past!");
 
-    public static CommandValidationError RecurringSessionAlreadyExists() =>
-        new("You cannot schedule another recurring session before removing your existing one with '/session cancel-schedule'");
-
     public static CommandValidationError NoUpcomingSessions() =>
-        new("The next session for this campaign has not been scheduled yet.");
+        new("No upcoming sessions for this campaign have been scheduled yet.");
+    
+    public static CommandValidationError NoSessionsForTimestamp() =>
+        new("There are no sessions scheduled for this campaign at that date/time.");
 
-    public static CommandValidationError NoRecurringSessions() =>
-        new("You do not have a recurring session scheduled for this campaign.");
+    public static CommandValidationError NoRecurringSessionsForTimestamp() =>
+        new("You are no recurring sessions scheduled for this campaign at that date/time.");
 }

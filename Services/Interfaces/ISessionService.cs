@@ -9,8 +9,11 @@ namespace GameMasterBot.Services.Interfaces;
 public interface ISessionService
 {
     Task<Session> Create(long campaignId, ScheduleFrequency scheduleFrequency, DateTime timestamp);
-    Task CancelNext(long campaignId);
-    Task CancelRecurringById(long sessionId);
-    Task<Session> GetRecurringByCampaignId(long campaignId);
-    Task<List<Session>> GetUpcomingByCampaignId(long campaignId);
+    Task CancelNextByCampaignId(long campaignId);
+    Task CancelAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime);
+    Task CancelAllRecurringByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime);
+    Task CancelAllByCampaignId(long campaignId);
+    Task<List<Session>> GetAllRecurringByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime);
+    Task<List<Session>> GetAllUpcomingByCampaignId(long campaignId);
+    Task<List<Session>> GetAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime);
 }

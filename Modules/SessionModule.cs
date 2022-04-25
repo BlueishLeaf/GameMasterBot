@@ -74,10 +74,10 @@ namespace GameMasterBot.Modules
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var sessions = await _sessionService.GetUpcomingByCampaignId(campaign.Id);
+            var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
 
             await RespondAsync(
-                SessionResponseMessages.NextSessionScheduled(campaign.Name),
+                SessionResponseMessages.NextSessionScheduled(),
                 embed: SessionEmbedBuilder.BuildSessionEmbed(sessions.First()),
                 ephemeral: true);
             return CommandResult.AsSuccess();
@@ -90,7 +90,7 @@ namespace GameMasterBot.Modules
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var sessions = await _sessionService.GetUpcomingByCampaignId(campaign.Id);
+            var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
             var user = await _userService.GetByDiscordUserId(Context.User.Id);
 
             await RespondAsync(
@@ -106,38 +106,97 @@ namespace GameMasterBot.Modules
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            await _sessionService.CancelNext(campaign.Id);
+            await _sessionService.CancelNextByCampaignId(campaign.Id);
 
-            var upcomingSessions = await _sessionService.GetUpcomingByCampaignId(campaign.Id);
+            var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
             if (upcomingSessions.Count == 0)
                 await RespondAsync(
-                    $"{SessionResponseMessages.NextSessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions(campaign.Name)}");
+                    $"{SessionResponseMessages.NextSessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions()}");
             else
                 await RespondAsync(
-                    $"{SessionResponseMessages.NextSessionCancelled()} {SessionResponseMessages.FollowingSessionDetails(campaign.Name)}",
+                    $"{SessionResponseMessages.NextSessionCancelled()} {SessionResponseMessages.FollowingSessionDetails()}",
+                    embed: SessionEmbedBuilder.BuildSessionEmbed(upcomingSessions.First()));
+            return CommandResult.AsSuccess();
+        }
+
+        [SlashCommand(SessionCommands.CancelCommandName, SessionCommands.CancelCommandDescription)]
+        public async Task<RuntimeResult> CancelSessionAsync(
+            [Summary(SessionCommands.CancelCommandParamDateName,SessionCommands.CancelCommandParamDateDescription)] string date,
+            [Summary(SessionCommands.CancelCommandParamTimeName,SessionCommands.CancelCommandParamTimeDescription)] string time)
+        {
+            var cancelSessionDto = new CancelSessionDto(date, time);
+            
+            var commandValidationError = await _validator.ValidateCancelSessionCommand(Context, cancelSessionDto);
+            if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
+            
+            var parsedDate = DateTime.ParseExact(
+                $"{date} {time}", 
+                SessionValidationConstants.SessionDateTimeFormat,
+                CultureInfo.InvariantCulture, 
+                DateTimeStyles.None);
+            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+            var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
+            
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            await _sessionService.CancelAllByCampaignIdAndTimestamp(campaign.Id, utcTime);
+            
+            var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            if (upcomingSessions.Count == 0)
+                await RespondAsync(
+                    $"{SessionResponseMessages.SessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions()}");
+            else
+                await RespondAsync(
+                    $"{SessionResponseMessages.SessionCancelled()} {SessionResponseMessages.FollowingSessionDetails()}",
+                    embed: SessionEmbedBuilder.BuildSessionEmbed(upcomingSessions.First()));
+            
+            return CommandResult.AsSuccess();
+        }
+
+        [SlashCommand(SessionCommands.CancelRecurringCommandName, SessionCommands.CancelRecurringCommandDescription)]
+        public async Task<RuntimeResult> CancelRecurringSessionAsync(
+            [Summary(SessionCommands.CancelCommandParamDateName,SessionCommands.CancelCommandParamDateDescription)] string date,
+            [Summary(SessionCommands.CancelCommandParamTimeName,SessionCommands.CancelCommandParamTimeDescription)] string time)
+        {
+            var cancelSessionDto = new CancelSessionDto(date, time);
+            
+            var commandValidationError = await _validator.ValidateCancelRecurringSessionCommand(Context, cancelSessionDto);
+            if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
+            
+            var parsedDate = DateTime.ParseExact(
+                $"{date} {time}", 
+                SessionValidationConstants.SessionDateTimeFormat,
+                CultureInfo.InvariantCulture, 
+                DateTimeStyles.None);
+            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+            var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
+            
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            
+            await _sessionService.CancelAllRecurringByCampaignIdAndTimestamp(campaign.Id, utcTime);
+
+            var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            if (upcomingSessions.Count == 0)
+                await RespondAsync(
+                    $"{SessionResponseMessages.RecurringSessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions()}");
+            else
+                await RespondAsync(
+                    $"{SessionResponseMessages.RecurringSessionCancelled()} {SessionResponseMessages.FollowingSessionDetails()}",
                     embed: SessionEmbedBuilder.BuildSessionEmbed(upcomingSessions.First()));
             return CommandResult.AsSuccess();
         }
         
-        [SlashCommand(SessionCommands.CancelRecurringCommandName, SessionCommands.CancelRecurringCommandDescription)]
-        public async Task<RuntimeResult> CancelRecurringSessionAsync()
+        [SlashCommand(SessionCommands.CancelAllCommandName, SessionCommands.CancelAllCommandDescription)]
+        public async Task<RuntimeResult> CancelAllSessionsAsync()
         {
-            var commandValidationError = await _validator.ValidateCancelRecurringSessionCommand(Context);
+            var commandValidationError = await _validator.ValidateCancelAllSessionsCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var existingRecurringSchedule = await _sessionService.GetRecurringByCampaignId(campaign.Id);
-            
-            await _sessionService.CancelRecurringById(existingRecurringSchedule.Id);
+            await _sessionService.CancelAllByCampaignId(campaign.Id);
 
-            var upcomingSessions = await _sessionService.GetUpcomingByCampaignId(campaign.Id);
-            if (upcomingSessions.Count == 0)
-                await RespondAsync(
-                    $"{SessionResponseMessages.RecurringSessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions(campaign.Name)}");
-            else
-                await RespondAsync(
-                    $"{SessionResponseMessages.RecurringSessionCancelled()} {SessionResponseMessages.FollowingSessionDetails(campaign.Name)}",
-                    embed: SessionEmbedBuilder.BuildSessionEmbed(upcomingSessions.First()));
+            await RespondAsync(SessionResponseMessages.AllSessionsCancelled());
             return CommandResult.AsSuccess();
         }
     }

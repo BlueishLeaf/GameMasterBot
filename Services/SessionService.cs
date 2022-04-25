@@ -21,6 +21,109 @@ namespace GameMasterBot.Services
             _sessionScheduler = sessionScheduler;
         }
 
+        public async Task<Session> Create(long campaignId, ScheduleFrequency scheduleFrequency, DateTime timestamp)
+        {
+            var session = (await _context.Sessions.AddAsync(new Session
+            {
+                CampaignId = campaignId,
+                Frequency = scheduleFrequency,
+                Timestamp = timestamp,
+                State = timestamp.Subtract(DateTime.UtcNow).TotalMinutes <= 30
+                    ? SessionState.Confirmed
+                    : SessionState.Scheduled
+            })).Entity;
+            await _context.SaveChangesAsync();
+            await _sessionScheduler.RefreshTimerData();
+            return session;
+        }
+
+        public async Task CancelNextByCampaignId(long campaignId)
+        {
+            var sessionFound = await _context.Sessions.FirstAsync(session =>
+                session.Timestamp >= DateTime.UtcNow &&
+                session.State != SessionState.Archived &&
+                session.CampaignId == campaignId);
+            sessionFound.State = SessionState.Archived;
+            _context.Sessions.Update(sessionFound);
+            await _context.SaveChangesAsync();
+            await CreateNextIfNecessary(sessionFound);
+            await _sessionScheduler.RefreshTimerData();
+        }
+
+        public async Task CancelAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime)
+        {
+            var sessionsFound = await _context.Sessions.Where(session =>
+                session.CampaignId == campaignId &&
+                session.Timestamp == utcDateTime &&
+                session.State != SessionState.Archived)
+                .ToListAsync();
+
+            foreach (var session in sessionsFound)
+            {
+                session.State = SessionState.Archived;
+                _context.Sessions.Update(session);
+                await CreateNextIfNecessary(session);
+            }
+            
+            await _context.SaveChangesAsync();
+            await _sessionScheduler.RefreshTimerData();   
+        }
+
+        public async Task CancelAllRecurringByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime)
+        {
+            var sessionsFound = await _context.Sessions.Where(session =>
+                    session.CampaignId == campaignId &&
+                    session.Timestamp == utcDateTime &&
+                    session.State != SessionState.Archived)
+                .ToListAsync();
+
+            foreach (var session in sessionsFound)
+            {
+                session.State = SessionState.Archived;
+                _context.Sessions.Update(session);
+            }
+            
+            await _context.SaveChangesAsync();
+            await _sessionScheduler.RefreshTimerData();   
+        }
+
+        public async Task CancelAllByCampaignId(long campaignId)
+        {
+            var sessionsFound = await _context.Sessions.Where(session =>
+                    session.CampaignId == campaignId &&
+                    session.State != SessionState.Archived)
+                .ToListAsync();
+
+            foreach (var session in sessionsFound)
+            {
+                session.State = SessionState.Archived;
+                _context.Sessions.Update(session);
+            }
+            
+            await _context.SaveChangesAsync();
+            await _sessionScheduler.RefreshTimerData();   
+        }
+
+        public async Task<List<Session>> GetAllRecurringByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime) =>
+            await _context.Sessions.Where(s =>
+                s.CampaignId == campaignId &&
+                s.State != SessionState.Archived &&
+                s.Frequency != ScheduleFrequency.Standalone &&
+                s.Timestamp == utcDateTime)
+                .ToListAsync();
+
+        public async Task<List<Session>> GetAllUpcomingByCampaignId(long campaignId) =>
+            await _context.Sessions
+                .Where(s =>
+                    s.CampaignId == campaignId && s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived)
+                .ToListAsync();
+
+        public async Task<List<Session>> GetAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime) =>
+            await _context.Sessions
+                .Where(s =>
+                    s.CampaignId == campaignId && s.Timestamp == utcDateTime && s.State != SessionState.Archived)
+                .ToListAsync();
+
         private async Task CreateNextIfNecessary(Session session)
         {
             if (session.Frequency != ScheduleFrequency.Standalone)
@@ -44,56 +147,6 @@ namespace GameMasterBot.Services
                 await _context.SaveChangesAsync();
             }
         }
-
-        public async Task<Session> Create(long campaignId, ScheduleFrequency scheduleFrequency, DateTime timestamp)
-        {
-            var session = (await _context.Sessions.AddAsync(new Session
-            {
-                CampaignId = campaignId,
-                Frequency = scheduleFrequency,
-                Timestamp = timestamp,
-                State = timestamp.Subtract(DateTime.UtcNow).TotalMinutes <= 30
-                    ? SessionState.Confirmed
-                    : SessionState.Scheduled
-            })).Entity;
-            await _context.SaveChangesAsync();
-            await _sessionScheduler.RefreshTimerData();
-            return session;
-        }
-
-        public async Task CancelNext(long campaignId)
-        {
-            var sessionFound = await _context.Sessions.FirstAsync(session =>
-                session.Timestamp >= DateTime.UtcNow &&
-                session.State != SessionState.Archived &&
-                session.CampaignId == campaignId);
-            sessionFound.State = SessionState.Archived;
-            _context.Sessions.Update(sessionFound);
-            await _context.SaveChangesAsync();
-            await CreateNextIfNecessary(sessionFound);
-            await _sessionScheduler.RefreshTimerData();
-        }
-
-        public async Task CancelRecurringById(long sessionId)
-        {
-            var sessionFound = await _context.Sessions.SingleAsync(s => s.Id == sessionId);
-            sessionFound.State = SessionState.Archived;
-            _context.Sessions.Update(sessionFound);
-            await _context.SaveChangesAsync();
-            await _sessionScheduler.RefreshTimerData();
-        }
-
-        public async Task<Session> GetRecurringByCampaignId(long campaignId) =>
-            await _context.Sessions.FirstOrDefaultAsync(s =>
-                s.CampaignId == campaignId &&
-                s.State != SessionState.Archived &&
-                s.Frequency != ScheduleFrequency.Standalone);
-
-        public async Task<List<Session>> GetUpcomingByCampaignId(long campaignId) =>
-            await _context.Sessions
-                .Where(s =>
-                    s.CampaignId == campaignId && s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived)
-                .ToListAsync();
     }
 }
 

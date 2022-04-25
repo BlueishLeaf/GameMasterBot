@@ -11,17 +11,10 @@ namespace GameMasterBot.Modules
     [RequireContext(ContextType.Guild)]
     public class InfoModule : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("roadmap", "Displays a link to the roadmap of planned features for this bot.")]
-        public async Task<RuntimeResult> ShowRoadmapAsync()
-        {
-            await RespondAsync("You can check the roadmap and source code at: https://github.com/BlueishLeaf/GameMasterBot/projects/1", ephemeral: true);
-            return CommandResult.AsSuccess();
-        }
-        
-        [SlashCommand("repository", "Displays a link to the GitHub repository for this bot.")]
+        [SlashCommand("support", "Displays a link to the GitHub repository for this bot.")]
         public async Task<RuntimeResult> ShowRepositoryAsync()
         {
-            await RespondAsync("You can check out the source code at: https://github.com/BlueishLeaf/GameMasterBot", ephemeral: true);
+            await RespondAsync("You can check out the GitHub repo and leave a bug ticket at: https://github.com/BlueishLeaf/GameMasterBot", ephemeral: true);
             return CommandResult.AsSuccess();
         }
         

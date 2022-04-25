@@ -23,7 +23,7 @@ public class InfoEmbedBuilder
                 new()
                 {
                     Name = "Scheduling a Session",
-                    Value = "Once you have created a campaign, you can use the `/session schedule` command to plan a session. This can be used to create a standalone session or a recurring schedule, either weekly, fortnightly, or monthly. Players are reminded of a session 30 minutes before, and once more when the session begins.",
+                    Value = "Once you have created a campaign, you can use the `/session schedule` command to plan a session. You should first use `/timezone set` to set your timezone to make scheduling more intuitive for you. This can be used to create a standalone session or a recurring schedule, either weekly, fortnightly, or monthly. Players are reminded of a session 30 minutes before, and once more when the session begins.",
                     IsInline = false
                 },
                 new()

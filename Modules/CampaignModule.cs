@@ -30,7 +30,7 @@ namespace GameMasterBot.Modules
             _userService = userService;
         }
 
-        [RequireRoleOrAdmin("Whitelisted")]
+        [RequireWhitelistedRoleOrAdminPrivileges]
         [SlashCommand(CampaignCommands.CreateCommandName, CampaignCommands.CreateCommandDescription)]
         public async Task<RuntimeResult> CreateCampaignAsync(
             [Summary(CampaignCommands.CreateCommandParamCampaignNameName, CampaignCommands.CreateCommandParamCampaignNameDescription)] string campaignName,
@@ -54,7 +54,7 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        [RequireRoleOrAdmin("Whitelisted")]
+        [RequireWhitelistedRoleOrAdminPrivileges]
         [SlashCommand(CampaignCommands.AddPlayerCommandName, CampaignCommands.AddPlayerCommandDescription)]
         public async Task<RuntimeResult> AddPlayerAsync(
             [Summary(CampaignCommands.AddPlayerCommandParamNewPlayerName, CampaignCommands.AddPlayerCommandParamNewPlayerDescription)] SocketGuildUser playerToAdd)
@@ -71,7 +71,7 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        [RequireRoleOrAdmin("Whitelisted")]
+        [RequireWhitelistedRoleOrAdminPrivileges]
         [SlashCommand(CampaignCommands.RemovePlayerCommandName, CampaignCommands.RemovePlayerCommandDescription)]
         public async Task<RuntimeResult> RemovePlayerAsync(
             [Summary(CampaignCommands.RemovePlayerCommandParamPlayerToRemoveName, CampaignCommands.RemovePlayerCommandParamPlayerToRemoveDescription)] SocketGuildUser playerToRemove)
@@ -88,7 +88,7 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        [RequireRoleOrAdmin("Whitelisted")]
+        [RequireWhitelistedRoleOrAdminPrivileges]
         [SlashCommand(CampaignCommands.SetUrlCommandName, CampaignCommands.SetUrlCommandDescription)]
         public async Task<RuntimeResult> SetUrlAsync(
             [Summary(CampaignCommands.SetUrlCommandParamGameUrlName, CampaignCommands.SetUrlCommandParamGameUrlDescription)] string gameUrl)
@@ -104,7 +104,7 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        [RequireRoleOrAdmin("Whitelisted")]
+        [RequireWhitelistedRoleOrAdminPrivileges]
         [SlashCommand(CampaignCommands.SetGameMasterCommandName, CampaignCommands.SetGameMasterCommandDescription)]
         public async Task<RuntimeResult> SetGameMasterAsync(
             [Summary(CampaignCommands.SetGameMasterCommandParamNewGameMasterName, CampaignCommands.SetGameMasterCommandParamNewGameMasterDescription)] SocketGuildUser newGameMaster)
@@ -124,7 +124,7 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
 
-        [RequireRoleOrAdmin("Whitelisted")]
+        [RequireWhitelistedRoleOrAdminPrivileges]
         [SlashCommand(CampaignCommands.DeleteCommandName, CampaignCommands.DeleteCommandDescription)]
         public async Task<RuntimeResult> DeleteCampaignAsync()
         {
