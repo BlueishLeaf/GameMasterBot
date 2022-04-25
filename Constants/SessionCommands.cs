@@ -46,7 +46,7 @@ public static class SessionCommands
     
     // Session Cancel-Recurring Command
     public const string CancelRecurringCommandName = "cancel-recurring";
-    public const string CancelRecurringCommandDescription = "Cancels a scheduled recurring session at the specified date/time for this campaign and stops it from re-occuring.";
+    public const string CancelRecurringCommandDescription = "Cancels a recurring session at the specified time for this campaign and stops it from re-occuring.";
     public const string CancelRecurringCommandParamDateName = "date";
     public const string CancelRecurringCommandParamDateDescription = "The date of the session you want to cancel. Must be in the form 'dd/MM/yyyy'.";
     public const string CancelRecurringCommandParamTimeName = "time";

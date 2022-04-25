@@ -155,8 +155,8 @@ namespace GameMasterBot.Modules
 
         [SlashCommand(SessionCommands.CancelRecurringCommandName, SessionCommands.CancelRecurringCommandDescription)]
         public async Task<RuntimeResult> CancelRecurringSessionAsync(
-            [Summary(SessionCommands.CancelCommandParamDateName,SessionCommands.CancelCommandParamDateDescription)] string date,
-            [Summary(SessionCommands.CancelCommandParamTimeName,SessionCommands.CancelCommandParamTimeDescription)] string time)
+            [Summary(SessionCommands.CancelRecurringCommandParamDateName,SessionCommands.CancelRecurringCommandParamDateDescription)] string date,
+            [Summary(SessionCommands.CancelRecurringCommandParamTimeName,SessionCommands.CancelRecurringCommandParamTimeDescription)] string time)
         {
             var cancelSessionDto = new CancelSessionDto(date, time);
             
