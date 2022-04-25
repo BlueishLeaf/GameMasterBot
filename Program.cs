@@ -57,6 +57,7 @@ namespace GameMasterBot
             .AddSingleton<SessionScheduler>()
             .AddSingleton<CampaignCommandValidator>()
             .AddSingleton<SessionCommandValidator>()
+            .AddSingleton<TimezoneCommandValidator>()
             .AddScoped<IUserService, UserService>()
             .AddScoped<ICampaignService, CampaignService>()
             .AddScoped<ISessionService, SessionService>()

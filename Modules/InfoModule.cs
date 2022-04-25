@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Discord.Interactions;
+using GameMasterBot.Constants;
 using GameMasterBot.Extensions;
+using GameMasterBot.Messages;
 using GameMasterBot.Utils;
 // Modules and their methods are picked up by the handler but not recognised by Rider
 // ReSharper disable UnusedType.Global
@@ -11,14 +13,14 @@ namespace GameMasterBot.Modules
     [RequireContext(ContextType.Guild)]
     public class InfoModule : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("support", "Displays a link to the GitHub repository for this bot.")]
+        [SlashCommand(InfoCommands.SupportCommandName, InfoCommands.SupportCommandDescription)]
         public async Task<RuntimeResult> ShowRepositoryAsync()
         {
-            await RespondAsync("You can check out the GitHub repo and leave a bug ticket at: https://github.com/BlueishLeaf/GameMasterBot", ephemeral: true);
+            await RespondAsync(InfoResponseMessages.LinkToRepository(), ephemeral: true);
             return CommandResult.AsSuccess();
         }
         
-        [SlashCommand("tutorial", "Displays a brief overview of how to use this bot.")]
+        [SlashCommand(InfoCommands.TutorialCommandName, InfoCommands.TutorialCommandDescription)]
         public async Task<RuntimeResult> ShowOverviewAsync()
         {
             await RespondAsync(embed: InfoEmbedBuilder.BuildTutorialEmbed(), ephemeral: true);

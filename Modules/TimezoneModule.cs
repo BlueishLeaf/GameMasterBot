@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Discord.Interactions;
+using GameMasterBot.Constants;
 using GameMasterBot.Extensions;
+using GameMasterBot.Messages;
 using GameMasterBot.Services;
 using GameMasterBot.Services.Interfaces;
 // Modules and their methods are picked up by the handler but not recognised by Rider
@@ -11,93 +13,48 @@ using GameMasterBot.Services.Interfaces;
 namespace GameMasterBot.Modules
 {
     [RequireContext(ContextType.Guild)]
-    [Group("timezone", "Commands for managing users' timezones.")]
+    [Group(TimezoneCommands.GroupName, TimezoneCommands.GroupDescription)]
     public class TimezoneModule : InteractionModuleBase<SocketInteractionContext>
     {
+        private readonly TimezoneCommandValidator _validator;
         private readonly IUserService _userService;
         
-        public TimezoneModule(IUserService userService) => _userService = userService;
+        public TimezoneModule(TimezoneCommandValidator validator, IUserService userService)
+        {
+            _validator = validator;
+            _userService = userService;
+        }
 
-        [SlashCommand("view", "Displays the timezone that you have set for yourself.")]
+        [SlashCommand(TimezoneCommands.ViewCommandName, TimezoneCommands.ViewCommandDescription)]
         public async Task<RuntimeResult> TimezoneAsync()
         {
             var user = await _userService.GetByDiscordUserId(Context.User.Id);
-            if (user.TimeZoneId == null)
-            {
-                return CommandResult.FromError("You have not set a timezone yet. You can set one using '/set-timezone'.");
-            }
 
-            // Search for timezone object
-            TimeZoneInfo tzInfo;
-            try
-            {
-                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
-            }
-            catch (TimeZoneNotFoundException exception)
-            {
-                Console.WriteLine(exception);
-                return CommandResult.FromError("Sorry, I could not find your timezone. Please look for it under the 'TZ database name' column on this list https://en.wikipedia.org/wiki/List_of_tz_database_time_zones and try again.");
-            }
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
 
-            await RespondAsync($"Your timezone is '{tzInfo.Id}'. If your timezone is incorrect, you can use '/timezone set' to set the correct one.", ephemeral: true);
-            return CommandResult.AsSuccess();
-        }
-
-        [SlashCommand("set", "Sets your timezone to make scheduling sessions easier.")]
-        public async Task<RuntimeResult> SetTimezoneAsync(
-            [Summary("iana-timezone", "Your IANA timezone (case-sensitive). Use '/timezone list' to find your IANA timezone.")] string tz)
-        {
-            // Search for timezone object
-            TimeZoneInfo tzInfo;
-            try
-            {
-                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tz);
-            }
-            catch (TimeZoneNotFoundException exception)
-            {
-                Console.WriteLine(exception);
-                return CommandResult.FromError("Sorry, I could not find your timezone. Please look for it under the 'TZ database name' column on this list https://en.wikipedia.org/wiki/List_of_tz_database_time_zones and try again.");
-            }
-
-            await _userService.UpdateTimezone(Context.User.Id, tzInfo.Id);
-
-            await RespondAsync($"Successfully set your timezone to {tzInfo.Id}.", ephemeral: true);
+            await RespondAsync(TimezoneResponseMessages.CurrentlySetTimezone(tzInfo.Id), ephemeral: true);
             return CommandResult.AsSuccess();
         }
         
-        [SlashCommand("view-all", "Displays all timezones compatible with this bot.")]
+        [SlashCommand(TimezoneCommands.ViewAllCommandName, TimezoneCommands.ViewAllCommandDescription)]
         public async Task<RuntimeResult> ShowTimezonesAsync()
         {
-            await RespondAsync("View timezones compatible with '/set-timezone' here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones", ephemeral: true);
+            await RespondAsync(TimezoneResponseMessages.ListAllTimezones(), ephemeral: true);
             return CommandResult.AsSuccess();
         }
-        
-        [SlashCommand("convert", "Converts a UTC time to your local time.")]
-        public async Task<RuntimeResult> ConvertAsync(
-            [Summary("utc-time", "The time in UTC that you want to convert.")] string utcTime)
+
+        [SlashCommand(TimezoneCommands.SetCommandName, TimezoneCommands.SetCommandDescription)]
+        public async Task<RuntimeResult> SetTimezoneAsync(
+            [Summary(TimezoneCommands.SetCommandParamIanaTimezoneName, TimezoneCommands.SetCommandParamIanaTimezoneDescription)] string ianaTimezone)
         {
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var commandValidationError = _validator.ValidateSetTimezoneCommand(ianaTimezone);
+            if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
 
-            if (!DateTime.TryParse(utcTime, out var parsedTime))
-            {
-                return CommandResult.FromError("You entered an invalid time. Time must be in the form 'HH:mm'.");
-            }
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(ianaTimezone);
+            await _userService.UpdateTimezone(Context.User.Id, tzInfo.Id);
 
-            TimeZoneInfo tzInfo;
-            try
-            {
-                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
-            }
-            catch (TimeZoneNotFoundException exception)
-            {
-                Console.WriteLine(exception);
-                return CommandResult.FromError("Sorry, I could not find your timezone. Please look for it under the 'TZ database name' column on this list https://en.wikipedia.org/wiki/List_of_tz_database_time_zones and try again.");
-            }
-
-            var localTime = TimeZoneInfo.ConvertTimeFromUtc(parsedTime, tzInfo);
-
-            await RespondAsync($"{parsedTime:HH:mm} (UTC) = {localTime:HH:mm} ({tzInfo.Id}).", ephemeral: true);
+            await RespondAsync(TimezoneResponseMessages.SetNewTimezone(tzInfo.Id), ephemeral: true);
             return CommandResult.AsSuccess();
-        } 
+        }
     }
 }

@@ -54,7 +54,7 @@ public class SessionScheduler
             if (nextTime < 0) nextTime = 0;
 
             _timer.Change(TimeSpan.FromSeconds(nextTime), TimeSpan.FromSeconds(nextTime));
-            Console.WriteLine($"{DateTime.Now:T} Timer delay set to {nextTime} seconds");
+            Console.WriteLine($"{DateTime.Now:T} Timer delay set to {(int) nextTime} seconds");
         }
     }
 
@@ -66,7 +66,14 @@ public class SessionScheduler
         {
             var timeDiff = (session.Timestamp - DateTime.UtcNow).TotalMinutes;
             var channelToNotify = (SocketTextChannel) _client.GetChannel(session.Campaign.TextChannelId);
-            if (timeDiff <= 0 && session.State == SessionState.Confirmed)
+            
+            if (timeDiff < -5) // Archive sessions older than 5 minutes that missed their reminder windows
+            {
+                session.State = SessionState.Archived;
+                await _sessionSchedulingService.UpdateSession(session);
+                await _sessionSchedulingService.CreateNextIfNecessary(session);
+            }
+            else if (timeDiff <= 0 && session.State == SessionState.Confirmed)
             {
                 Console.WriteLine($"{DateTime.Now:T} Notifying text channel [id: {session.Campaign.TextChannelId}] of the session starting now at {session.Timestamp:g}");
                 await channelToNotify.SendMessageAsync($"<@&{session.Campaign.GameMasterRoleId}>, <@&{session.Campaign.PlayerRoleId}> Attention! Today's session is about to begin!");
@@ -82,7 +89,6 @@ public class SessionScheduler
                 await _sessionSchedulingService.UpdateSession(session);
             }
         }
-
         await RefreshTimerData();
     }
 }
