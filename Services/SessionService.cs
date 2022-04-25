@@ -39,14 +39,17 @@ namespace GameMasterBot.Services
 
         public async Task CancelNextByCampaignId(long campaignId)
         {
-            var sessionFound = await _context.Sessions.FirstAsync(session =>
+            var sessionsFound = await _context.Sessions.Where(session =>
                 session.Timestamp >= DateTime.UtcNow &&
                 session.State != SessionState.Archived &&
-                session.CampaignId == campaignId);
-            sessionFound.State = SessionState.Archived;
-            _context.Sessions.Update(sessionFound);
+                session.CampaignId == campaignId)
+                .ToListAsync();
+            var nextSession = sessionsFound.OrderBy(s => s.Timestamp).First();
+            nextSession.State = SessionState.Archived;
+            
+            _context.Sessions.Update(nextSession);
             await _context.SaveChangesAsync();
-            await CreateNextIfNecessary(sessionFound);
+            await CreateNextIfNecessary(nextSession);
             await _sessionScheduler.RefreshTimerData();
         }
 
@@ -116,6 +119,7 @@ namespace GameMasterBot.Services
             await _context.Sessions
                 .Where(s =>
                     s.CampaignId == campaignId && s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived)
+                .OrderBy(s => s.Timestamp)
                 .ToListAsync();
 
         public async Task<List<Session>> GetAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime) =>
@@ -135,6 +139,7 @@ namespace GameMasterBot.Services
                     ScheduleFrequency.Monthly => session.Timestamp.AddMonths(1),
                     _ => session.Timestamp
                 };
+                Console.WriteLine($"{DateTime.Now:T} Creating new {session.Frequency} session for {timestamp:g}");
                 await _context.Sessions.AddAsync(new Session
                 {
                     CampaignId = session.CampaignId,

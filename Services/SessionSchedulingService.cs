@@ -19,10 +19,14 @@ public class SessionSchedulingService : ISessionSchedulingService
         _context = context;
     }
 
+    public async Task<List<Session>> GetAllUpcomingSessions() => 
+        await _context.Sessions.Where(s => s.State != SessionState.Archived).ToListAsync();
+
     public async Task<List<Session>> GetSessionsOccurringInNextMinutes(int minutes)
     {
+        var nowPlusMinutes = DateTime.UtcNow.AddMinutes(minutes);
         return await _context.Sessions
-            .Where(s => s.Timestamp >= DateTime.UtcNow.AddMinutes(-minutes) && s.State != SessionState.Archived)
+            .Where(s => s.Timestamp <= nowPlusMinutes && s.State != SessionState.Archived)
             .ToListAsync();
     }
 
@@ -44,6 +48,7 @@ public class SessionSchedulingService : ISessionSchedulingService
                 ScheduleFrequency.Monthly => session.Timestamp.AddMonths(1),
                 _ => session.Timestamp
             };
+            Console.WriteLine($"{DateTime.Now:T} Creating new {session.Frequency} session for {timestamp:g}");
             await _context.Sessions.AddAsync(new Session
             {
                 CampaignId = session.CampaignId,

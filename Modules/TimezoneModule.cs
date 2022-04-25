@@ -39,13 +39,13 @@ namespace GameMasterBot.Modules
                 return CommandResult.FromError("Sorry, I could not find your timezone. Please look for it under the 'TZ database name' column on this list https://en.wikipedia.org/wiki/List_of_tz_database_time_zones and try again.");
             }
 
-            await RespondAsync($"Your timezone is '{tzInfo.StandardName}'.", ephemeral: true);
+            await RespondAsync($"Your timezone is '{tzInfo.Id}'. If your timezone is incorrect, you can use '/timezone set' to set the correct one.", ephemeral: true);
             return CommandResult.AsSuccess();
         }
 
         [SlashCommand("set", "Sets your timezone to make scheduling sessions easier.")]
         public async Task<RuntimeResult> SetTimezoneAsync(
-            [Summary("timezone", "Your IANA timezone (case-sensitive). Use '/timezone list' to find your IANA timezone.")] string tz)
+            [Summary("iana-timezone", "Your IANA timezone (case-sensitive). Use '/timezone list' to find your IANA timezone.")] string tz)
         {
             // Search for timezone object
             TimeZoneInfo tzInfo;
@@ -78,11 +78,6 @@ namespace GameMasterBot.Modules
         {
             var user = await _userService.GetByDiscordUserId(Context.User.Id);
 
-            if (user.TimeZoneId == null)
-            {
-                return CommandResult.FromError("You have not set a timezone yet. Set one with '/set-timezone' followed by your timezone abbreviation.");
-            }
-
             if (!DateTime.TryParse(utcTime, out var parsedTime))
             {
                 return CommandResult.FromError("You entered an invalid time. Time must be in the form 'HH:mm'.");
@@ -101,7 +96,7 @@ namespace GameMasterBot.Modules
 
             var localTime = TimeZoneInfo.ConvertTimeFromUtc(parsedTime, tzInfo);
 
-            await RespondAsync($"{parsedTime:HH:mm} UTC = {localTime:HH:mm} {tzInfo.StandardName}.", ephemeral: true);
+            await RespondAsync($"{parsedTime:HH:mm} (UTC) = {localTime:HH:mm} ({tzInfo.Id}).", ephemeral: true);
             return CommandResult.AsSuccess();
         } 
     }

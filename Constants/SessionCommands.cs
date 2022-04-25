@@ -29,8 +29,8 @@ public static class SessionCommands
     public const string ViewNextCommandDescription = "Displays the details of the next scheduled session for this campaign.";
     
     // Session View-Upcoming Command
-    public const string ViewUpcomingCommandName = "view-upcoming";
-    public const string ViewUpcomingCommandDescription = "Displays the details of all the currently scheduled sessions for this campaign.";
+    public const string ViewUpcomingCommandName = "view-all-upcoming";
+    public const string ViewUpcomingCommandDescription = "Displays the details of all the upcoming scheduled sessions for this campaign.";
     
     // Session Cancel Command
     public const string CancelCommandName = "cancel";

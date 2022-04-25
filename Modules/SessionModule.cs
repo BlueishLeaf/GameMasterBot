@@ -109,6 +109,7 @@ namespace GameMasterBot.Modules
             await _sessionService.CancelNextByCampaignId(campaign.Id);
 
             var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+
             if (upcomingSessions.Count == 0)
                 await RespondAsync(
                     $"{SessionResponseMessages.NextSessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions()}");
