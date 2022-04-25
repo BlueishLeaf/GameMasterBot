@@ -5,6 +5,9 @@ public static class SessionResponseMessages
     public static string SessionSuccessfullyScheduled() =>
         "Session successfully scheduled for this campaign!";
     
+    public static string SessionSuccessfullySuggested() =>
+        "You have proposed a date and time for a potential session.";
+
     public static string SessionJustScheduled() =>
         "Here are the details of the session that was just scheduled for this campaign.";
 

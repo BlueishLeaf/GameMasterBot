@@ -1,5 +1,3 @@
-﻿using GameMasterBot.Models.Enums;
+﻿namespace GameMasterBot.DTOs;
 
-namespace GameMasterBot.DTOs;
-
-public record ScheduleSessionCommandDto(string Date, string Time, ScheduleFrequency Frequency);
+public record ScheduleSessionCommandDto(string Date, string Time);

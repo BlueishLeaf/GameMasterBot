@@ -59,6 +59,43 @@ namespace GameMasterBot.Utils
                 _ => null
             };
         }
+        
+        public static Embed BuildSuggestionEmbed(Campaign campaign, DateTime utcDateTime)
+        {
+            var tzInfoGm = TimeZoneInfo.FindSystemTimeZoneById(campaign.GameMaster.User.TimeZoneId);
+            var localisedTimestampGm = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, tzInfoGm);
+            var participants = $"<@{campaign.GameMaster.User.DiscordId}> *(Game Master)*\n";
+            var localisedDateTimes = $"{localisedTimestampGm:g} *({tzInfoGm.Id})*\n";
+            foreach (var player in campaign.Players)
+            {
+                var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(player.User.TimeZoneId);
+                var localisedTimestamp = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, tzInfo);
+                participants += $"<@{player.User.DiscordId}>\n";
+                localisedDateTimes += $"{localisedTimestamp:g} *({tzInfo.Id})*\n";
+            }
+            return new EmbedBuilder
+            {
+                Author = new EmbedAuthorBuilder().WithName($"{campaign.Name} Session Proposal").WithIconUrl(EmbedConstants.IconUrl),
+                Description = "***Note:** All session times are shown in the participants' respective timezones. If someone has an incorrect timezone, they can use `/timezone set` to set the correct one.*",
+                Color = Color.Blue,
+                Footer = new EmbedFooterBuilder().WithText("Note: This is not a confirmed scheduled session, just a suggestion."),
+                Fields = new List<EmbedFieldBuilder>
+                {
+                    new()
+                    {
+                        Name = "Participant",
+                        Value = participants,
+                        IsInline = true
+                    },
+                    new()
+                    {
+                        Name = "Localised Date/Time",
+                        Value = localisedDateTimes,
+                        IsInline = true
+                    }
+                }
+            }.Build();
+        }
 
         public static Embed BuildSessionListEmbed(User viewingUser, List<Session> sessions)
         {

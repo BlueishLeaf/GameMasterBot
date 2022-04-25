@@ -24,6 +24,14 @@ public static class SessionCommands
     public const string ScheduleCommandParamFrequencyChoiceMonthlyName = "Monthly";
     public const int ScheduleCommandParamFrequencyChoiceMonthlyValue = 3;
     
+    // Session Suggest Command
+    public const string SuggestCommandName = "suggest";
+    public const string SuggestCommandDescription = "Suggests a date/time for a session, your suggestion will then be localised to everyone's timezones.";
+    public const string SuggestCommandParamDateName = "date";
+    public const string SuggestCommandParamDateDescription = "The date on which the session would take place. Must be in the form 'dd/MM/yyyy'.";
+    public const string SuggestCommandParamTimeName = "time";
+    public const string SuggestCommandParamTimeDescription = "The time at which the session would take place. Must be in the form 'hh:mm'.";
+    
     // Session View-Next Command
     public const string ViewNextCommandName = "view-next";
     public const string ViewNextCommandDescription = "Displays the details of the next scheduled session for this campaign.";

@@ -45,7 +45,7 @@ namespace GameMasterBot.Modules
             [Choice(SessionCommands.ScheduleCommandParamFrequencyChoiceMonthlyName, SessionCommands.ScheduleCommandParamFrequencyChoiceMonthlyValue)]
             ScheduleFrequency frequency)
         {
-            var scheduleSessionCommandDto = new ScheduleSessionCommandDto(date, time, frequency);
+            var scheduleSessionCommandDto = new ScheduleSessionCommandDto(date, time);
             var commandValidationError = await _validator.ValidateScheduleSessionCommand(Context, scheduleSessionCommandDto);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
@@ -67,6 +67,33 @@ namespace GameMasterBot.Modules
             return CommandResult.AsSuccess();
         }
         
+        [SlashCommand(SessionCommands.SuggestCommandName, SessionCommands.SuggestCommandDescription)]
+        public async Task<RuntimeResult> SuggestSessionAsync(
+            [Summary(SessionCommands.SuggestCommandParamDateName,SessionCommands.SuggestCommandParamDateDescription)] string date,
+            [Summary(SessionCommands.SuggestCommandParamTimeName,SessionCommands.SuggestCommandParamTimeDescription)] string time)
+        {
+            var scheduleSessionCommandDto = new ScheduleSessionCommandDto(date, time);
+            var commandValidationError = await _validator.ValidateSuggestSessionCommand(Context, scheduleSessionCommandDto);
+            if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
+            
+            var parsedDate = DateTime.ParseExact(
+                $"{scheduleSessionCommandDto.Date} {scheduleSessionCommandDto.Time}", 
+                SessionValidationConstants.SessionDateTimeFormat,
+                CultureInfo.InvariantCulture, 
+                DateTimeStyles.None);
+            
+            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+            var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
+            
+            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+
+            await RespondAsync(
+                SessionResponseMessages.SessionSuccessfullySuggested(), 
+                embed: SessionEmbedBuilder.BuildSuggestionEmbed(campaign, utcDateTime));
+            return CommandResult.AsSuccess();
+        }
+
         [SlashCommand(SessionCommands.ViewNextCommandName, SessionCommands.ViewNextCommandDescription)]
         public async Task<RuntimeResult> ViewNextSessionAsync()
         {

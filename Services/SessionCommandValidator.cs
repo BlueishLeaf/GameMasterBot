@@ -44,6 +44,23 @@ public class SessionCommandValidator
             SessionValidationMessages.DateIsInPast() :
             null;
     }
+    
+    public async Task<CommandValidationError> ValidateSuggestSessionCommand(SocketInteractionContext context, ScheduleSessionCommandDto scheduleSessionCommandDto)
+    {
+        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        if (campaign == null)
+            return CommonValidationMessages.NotInCampaignChannel();
+
+        if (!DateTime.TryParseExact($"{scheduleSessionCommandDto.Date} {scheduleSessionCommandDto.Time}", SessionValidationConstants.SessionDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            return SessionValidationMessages.InvalidDateTime();
+
+        var user = await _userService.GetByDiscordUserId(context.User.Id);
+        var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+        var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
+        return utcTime <= DateTime.UtcNow ?
+            SessionValidationMessages.DateIsInPast() :
+            null;
+    }
 
     public async Task<CommandValidationError> ValidateViewNextSessionCommand(SocketInteractionContext context)
     {
