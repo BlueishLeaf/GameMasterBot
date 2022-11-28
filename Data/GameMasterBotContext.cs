@@ -13,22 +13,7 @@ namespace GameMasterBot.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-            var uri = new Uri(databaseUrl ?? string.Empty);
-            var userInfoSplit = uri.UserInfo.Split(':');
-            var username = userInfoSplit[0];
-            var password = userInfoSplit[1];
-            var database = uri.Segments[1];
-            
-            var connectionString =
-                $"Host={uri.Host};" +
-                $"Port={uri.Port};" +
-                $"Database={database};" +
-                $"Username={username};" +
-                $"Password={password};" +
-                "Sslmode=Prefer;" +
-                "Trust Server Certificate=true;";
-
+            var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
             options.UseNpgsql(connectionString);
         }
 

@@ -9,9 +9,6 @@ using GameMasterBot.Models.Entities;
 using GameMasterBot.Services;
 using GameMasterBot.Services.Interfaces;
 using GameMasterBot.Utils;
-// Modules and their methods are picked up by the handler but not recognised by Rider
-// ReSharper disable UnusedType.Global
-// ReSharper disable UnusedMember.Global
 
 namespace GameMasterBot.Modules
 {
