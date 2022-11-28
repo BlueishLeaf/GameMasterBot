@@ -22,7 +22,7 @@ namespace GameMasterBot
         {
             var clientConfig = new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.AllUnprivileged
+                GatewayIntents = GatewayIntents.Guilds
             };
             _client = new DiscordSocketClient(clientConfig);
             _interactionService = new InteractionService(_client.Rest);
@@ -34,8 +34,9 @@ namespace GameMasterBot
         {
             await using var services = BuildServiceProvider();
 
+            #if DEBUG
             await services.GetRequiredService<GameMasterBotContext>().Database.MigrateAsync();
-
+            #endif
             _client.Log += LogAsync;
             _interactionService.Log += LogAsync;
             _client.Ready += ReadyAsync;
@@ -72,18 +73,15 @@ namespace GameMasterBot
 
         private async Task ReadyAsync()
         {
-            if (Debugger.IsAttached)
-            {
-                // Add the commands to a specific test Guild immediately
-                var testGuildId = Environment.GetEnvironmentVariable("TEST_GUILD_ID");
-                Console.WriteLine($"{DateTime.Now:T} In debug mode, adding commands to {testGuildId}...");
-                await _interactionService.RegisterCommandsToGuildAsync(Convert.ToUInt64(testGuildId));
-            }
-            else
-            {
-                // Add the commands globally, will take around an hour
-                await _interactionService.RegisterCommandsGloballyAsync();
-            }
+            #if DEBUG
+            // Add the commands to a specific test Guild immediately
+            var testGuildId = Environment.GetEnvironmentVariable("TEST_GUILD_ID");
+            Console.WriteLine($"{DateTime.Now:T} In debug mode, adding commands to {testGuildId}...");
+            await _interactionService.RegisterCommandsToGuildAsync(Convert.ToUInt64(testGuildId));
+            #else
+            Console.WriteLine($"{DateTime.Now:T} In release mode, adding commands to all guilds...");
+            await _interactionService.RegisterCommandsGloballyAsync();
+            #endif
             Console.WriteLine($"{DateTime.Now:T} Connected as -> [{_client.CurrentUser}]");
             Console.WriteLine($"{DateTime.Now:T} I am on [{_client.Guilds.Count}] guilds");
         }
