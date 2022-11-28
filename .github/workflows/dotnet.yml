@@ -28,5 +28,13 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore --configuration Release
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    steps:
+    - name: Stop the Application Service
+      run: sudo systemctl stop GameMasterBot.service
     - name: Publish
-      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/GameMasterBot
+      run: dotnet publish -c Release -o ~/GameMasterBot
+    - name: Start the Application Service
+      run: sudo systemctl start GameMasterBot.service
