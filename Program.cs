@@ -37,6 +37,7 @@ namespace GameMasterBot
             #if DEBUG
             await services.GetRequiredService<GameMasterBotContext>().Database.MigrateAsync();
             #endif
+
             _client.Log += LogAsync;
             _interactionService.Log += LogAsync;
             _client.Ready += ReadyAsync;
