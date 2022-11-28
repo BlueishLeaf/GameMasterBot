@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+    env:
+      DOTNET_INSTALL_DIR: "./.dotnet"
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
