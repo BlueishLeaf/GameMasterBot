@@ -147,7 +147,7 @@ namespace GameMasterBot.Modules
                 
             var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
 
-            await RespondAsync(embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign));
+            await RespondAsync(embed: CampaignEmbedBuilder.BuildCampaignEmbed(campaign), ephemeral: true);
             return CommandResult.AsSuccess();
         }
     }
