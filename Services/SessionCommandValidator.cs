@@ -11,22 +11,11 @@ using GameMasterBot.Services.Interfaces;
 
 namespace GameMasterBot.Services;
 
-public class SessionCommandValidator
+public class SessionCommandValidator(ICampaignService campaignService, ISessionService sessionService, IUserService userService)
 {
-    private readonly ICampaignService _campaignService;
-    private readonly ISessionService _sessionService;
-    private readonly IUserService _userService;
-
-    public SessionCommandValidator(ICampaignService campaignService, ISessionService sessionService, IUserService userService)
-    {
-        _campaignService = campaignService;
-        _sessionService = sessionService;
-        _userService = userService;
-    }
-
     public async Task<CommandValidationError> ValidateScheduleSessionCommand(SocketInteractionContext context, ScheduleSessionCommandDto scheduleSessionCommandDto)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -37,7 +26,7 @@ public class SessionCommandValidator
         if (!DateTime.TryParseExact($"{scheduleSessionCommandDto.Date} {scheduleSessionCommandDto.Time}", SessionValidationConstants.SessionDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
             return SessionValidationMessages.InvalidDateTime();
 
-        var user = await _userService.GetByDiscordUserId(context.User.Id);
+        var user = await userService.GetByDiscordUserId(context.User.Id);
         var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
         var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
         return utcTime <= DateTime.UtcNow ?
@@ -47,14 +36,14 @@ public class SessionCommandValidator
     
     public async Task<CommandValidationError> ValidateSuggestSessionCommand(SocketInteractionContext context, ScheduleSessionCommandDto scheduleSessionCommandDto)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
         if (!DateTime.TryParseExact($"{scheduleSessionCommandDto.Date} {scheduleSessionCommandDto.Time}", SessionValidationConstants.SessionDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
             return SessionValidationMessages.InvalidDateTime();
 
-        var user = await _userService.GetByDiscordUserId(context.User.Id);
+        var user = await userService.GetByDiscordUserId(context.User.Id);
         var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
         var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
         return utcTime <= DateTime.UtcNow ?
@@ -64,11 +53,11 @@ public class SessionCommandValidator
 
     public async Task<CommandValidationError> ValidateViewNextSessionCommand(SocketInteractionContext context)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
-        var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+        var sessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
         return !sessions.Any() ?
             SessionValidationMessages.NoUpcomingSessions() :
             null;
@@ -76,11 +65,11 @@ public class SessionCommandValidator
 
     public async Task<CommandValidationError> ValidateViewUpcomingSessionsCommand(SocketInteractionContext context)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
-        var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+        var sessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
         return !sessions.Any() ?
             SessionValidationMessages.NoUpcomingSessions() :
             null;
@@ -88,7 +77,7 @@ public class SessionCommandValidator
     
     public async Task<CommandValidationError> ValidateCancelSessionCommand(SocketInteractionContext context, CancelSessionDto cancelSessionDto)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -99,11 +88,11 @@ public class SessionCommandValidator
         if (!DateTime.TryParseExact($"{cancelSessionDto.Date} {cancelSessionDto.Time}", SessionValidationConstants.SessionDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
             return SessionValidationMessages.InvalidDateTime();
         
-        var user = await _userService.GetByDiscordUserId(context.User.Id);
+        var user = await userService.GetByDiscordUserId(context.User.Id);
         var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
         var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
         
-        var sessions = await _sessionService.GetAllByCampaignIdAndTimestamp(campaign.Id, utcDateTime);
+        var sessions = await sessionService.GetAllByCampaignIdAndTimestamp(campaign.Id, utcDateTime);
         return !sessions.Any() ?
             SessionValidationMessages.NoSessionsForTimestamp() :
             null;
@@ -111,7 +100,7 @@ public class SessionCommandValidator
 
     public async Task<CommandValidationError> ValidateCancelNextSessionCommand(SocketInteractionContext context)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -119,7 +108,7 @@ public class SessionCommandValidator
         if (campaign.GameMaster.User.DiscordId != context.User.Id && !commandIssuer.GuildPermissions.Administrator)
             return CommonValidationMessages.NotGameMasterOrAdmin();
 
-        var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+        var sessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
         return !sessions.Any() ?
             SessionValidationMessages.NoUpcomingSessions() :
             null;
@@ -127,7 +116,7 @@ public class SessionCommandValidator
 
     public async Task<CommandValidationError> ValidateCancelRecurringSessionCommand(SocketInteractionContext context, CancelSessionDto cancelSessionDto)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -138,11 +127,11 @@ public class SessionCommandValidator
         if (!DateTime.TryParseExact($"{cancelSessionDto.Date} {cancelSessionDto.Time}", SessionValidationConstants.SessionDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
             return SessionValidationMessages.InvalidDateTime();
         
-        var user = await _userService.GetByDiscordUserId(context.User.Id);
+        var user = await userService.GetByDiscordUserId(context.User.Id);
         var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
         var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
 
-        var existingRecurringSchedule = await _sessionService.GetAllRecurringByCampaignIdAndTimestamp(campaign.Id, utcDateTime);
+        var existingRecurringSchedule = await sessionService.GetAllRecurringByCampaignIdAndTimestamp(campaign.Id, utcDateTime);
         return !existingRecurringSchedule.Any() ?
             SessionValidationMessages.NoRecurringSessionsForTimestamp() :
             null;
@@ -150,7 +139,7 @@ public class SessionCommandValidator
     
     public async Task<CommandValidationError> ValidateCancelAllSessionsCommand(SocketInteractionContext context)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -158,7 +147,7 @@ public class SessionCommandValidator
         if (campaign.GameMaster.User.DiscordId != context.User.Id && !commandIssuer.GuildPermissions.Administrator)
             return CommonValidationMessages.NotGameMasterOrAdmin();
 
-        var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+        var sessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
         return !sessions.Any() ?
             SessionValidationMessages.NoUpcomingSessions() :
             null;

@@ -10,20 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameMasterBot.Services
 {
-    public class SessionService : ISessionService
+    public class SessionService(GameMasterBotContext context, SessionScheduler sessionScheduler) : ISessionService
     {
-        private readonly GameMasterBotContext _context;
-        private readonly SessionScheduler _sessionScheduler;
-
-        public SessionService(GameMasterBotContext context, SessionScheduler sessionScheduler)
-        {
-            _context = context;
-            _sessionScheduler = sessionScheduler;
-        }
-
         public async Task<Session> Create(long campaignId, ScheduleFrequency scheduleFrequency, DateTime timestamp)
         {
-            var session = (await _context.Sessions.AddAsync(new Session
+            var session = (await context.Sessions.AddAsync(new Session
             {
                 CampaignId = campaignId,
                 Frequency = scheduleFrequency,
@@ -32,14 +23,14 @@ namespace GameMasterBot.Services
                     ? SessionState.Confirmed
                     : SessionState.Scheduled
             })).Entity;
-            await _context.SaveChangesAsync();
-            await _sessionScheduler.RefreshTimerData();
+            await context.SaveChangesAsync();
+            await sessionScheduler.RefreshTimerData();
             return session;
         }
 
         public async Task CancelNextByCampaignId(long campaignId)
         {
-            var sessionsFound = await _context.Sessions.Where(session =>
+            var sessionsFound = await context.Sessions.Where(session =>
                 session.Timestamp >= DateTime.UtcNow &&
                 session.State != SessionState.Archived &&
                 session.CampaignId == campaignId)
@@ -47,15 +38,15 @@ namespace GameMasterBot.Services
             var nextSession = sessionsFound.OrderBy(s => s.Timestamp).First();
             nextSession.State = SessionState.Archived;
             
-            _context.Sessions.Update(nextSession);
-            await _context.SaveChangesAsync();
+            context.Sessions.Update(nextSession);
+            await context.SaveChangesAsync();
             await CreateNextIfNecessary(nextSession);
-            await _sessionScheduler.RefreshTimerData();
+            await sessionScheduler.RefreshTimerData();
         }
 
         public async Task CancelAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime)
         {
-            var sessionsFound = await _context.Sessions.Where(session =>
+            var sessionsFound = await context.Sessions.Where(session =>
                 session.CampaignId == campaignId &&
                 session.Timestamp == utcDateTime &&
                 session.State != SessionState.Archived)
@@ -64,17 +55,17 @@ namespace GameMasterBot.Services
             foreach (var session in sessionsFound)
             {
                 session.State = SessionState.Archived;
-                _context.Sessions.Update(session);
+                context.Sessions.Update(session);
                 await CreateNextIfNecessary(session);
             }
             
-            await _context.SaveChangesAsync();
-            await _sessionScheduler.RefreshTimerData();   
+            await context.SaveChangesAsync();
+            await sessionScheduler.RefreshTimerData();   
         }
 
         public async Task CancelAllRecurringByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime)
         {
-            var sessionsFound = await _context.Sessions.Where(session =>
+            var sessionsFound = await context.Sessions.Where(session =>
                     session.CampaignId == campaignId &&
                     session.Timestamp == utcDateTime &&
                     session.State != SessionState.Archived)
@@ -83,16 +74,16 @@ namespace GameMasterBot.Services
             foreach (var session in sessionsFound)
             {
                 session.State = SessionState.Archived;
-                _context.Sessions.Update(session);
+                context.Sessions.Update(session);
             }
             
-            await _context.SaveChangesAsync();
-            await _sessionScheduler.RefreshTimerData();   
+            await context.SaveChangesAsync();
+            await sessionScheduler.RefreshTimerData();   
         }
 
         public async Task CancelAllByCampaignId(long campaignId)
         {
-            var sessionsFound = await _context.Sessions.Where(session =>
+            var sessionsFound = await context.Sessions.Where(session =>
                     session.CampaignId == campaignId &&
                     session.State != SessionState.Archived)
                 .ToListAsync();
@@ -100,15 +91,15 @@ namespace GameMasterBot.Services
             foreach (var session in sessionsFound)
             {
                 session.State = SessionState.Archived;
-                _context.Sessions.Update(session);
+                context.Sessions.Update(session);
             }
             
-            await _context.SaveChangesAsync();
-            await _sessionScheduler.RefreshTimerData();   
+            await context.SaveChangesAsync();
+            await sessionScheduler.RefreshTimerData();   
         }
 
         public async Task<List<Session>> GetAllRecurringByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime) =>
-            await _context.Sessions.Where(s =>
+            await context.Sessions.Where(s =>
                 s.CampaignId == campaignId &&
                 s.State != SessionState.Archived &&
                 s.Frequency != ScheduleFrequency.Standalone &&
@@ -116,14 +107,14 @@ namespace GameMasterBot.Services
                 .ToListAsync();
 
         public async Task<List<Session>> GetAllUpcomingByCampaignId(long campaignId) =>
-            await _context.Sessions
+            await context.Sessions
                 .Where(s =>
                     s.CampaignId == campaignId && s.Timestamp >= DateTime.UtcNow && s.State != SessionState.Archived)
                 .OrderBy(s => s.Timestamp)
                 .ToListAsync();
 
         public async Task<List<Session>> GetAllByCampaignIdAndTimestamp(long campaignId, DateTime utcDateTime) =>
-            await _context.Sessions
+            await context.Sessions
                 .Where(s =>
                     s.CampaignId == campaignId && s.Timestamp == utcDateTime && s.State != SessionState.Archived)
                 .ToListAsync();
@@ -140,7 +131,7 @@ namespace GameMasterBot.Services
                     _ => session.Timestamp
                 };
                 Console.WriteLine($"{DateTime.Now:T} Creating new {session.Frequency} session for {timestamp:g}");
-                await _context.Sessions.AddAsync(new Session
+                await context.Sessions.AddAsync(new Session
                 {
                     CampaignId = session.CampaignId,
                     Frequency = session.Frequency,
@@ -149,7 +140,7 @@ namespace GameMasterBot.Services
                         ? SessionState.Confirmed
                         : SessionState.Scheduled
                 });
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
             }
         }
     }

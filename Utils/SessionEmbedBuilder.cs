@@ -29,21 +29,22 @@ namespace GameMasterBot.Utils
                 Description = "***Note:** All session times are shown in the participants' respective timezones. If someone has an incorrect timezone, they can use `/timezone set` to set the correct one.*",
                 Color = Color.Gold,
                 Footer = new EmbedFooterBuilder().WithText(GetSessionFooterMessage(session.Frequency)),
-                Fields = new List<EmbedFieldBuilder>
-                {
-                    new()
+                Fields =
+                [
+                    new EmbedFieldBuilder
                     {
                         Name = "Participant",
                         Value = participants,
                         IsInline = true
                     },
-                    new()
+
+                    new EmbedFieldBuilder
                     {
                         Name = "Localised Date/Time",
                         Value = localisedDateTimes,
                         IsInline = true
                     }
-                }
+                ]
             }.Build();
         }
 
@@ -78,21 +79,22 @@ namespace GameMasterBot.Utils
                 Description = "***Note:** All session times are shown in the participants' respective timezones. If someone has an incorrect timezone, they can use `/timezone set` to set the correct one.*",
                 Color = Color.Blue,
                 Footer = new EmbedFooterBuilder().WithText("Note: This is not a confirmed scheduled session, just a suggestion."),
-                Fields = new List<EmbedFieldBuilder>
-                {
-                    new()
+                Fields =
+                [
+                    new EmbedFieldBuilder
                     {
                         Name = "Participant",
                         Value = participants,
                         IsInline = true
                     },
-                    new()
+
+                    new EmbedFieldBuilder
                     {
                         Name = "Localised Date/Time",
                         Value = localisedDateTimes,
                         IsInline = true
                     }
-                }
+                ]
             }.Build();
         }
 
@@ -112,21 +114,22 @@ namespace GameMasterBot.Utils
                 Author = new EmbedAuthorBuilder().WithName($"Upcoming Scheduled Sessions for {firstSession.Campaign.Name}").WithIconUrl(EmbedConstants.IconUrl),
                 Description = $"***Note:** All session times are shown in your timezone ({viewingUser.TimeZoneId}). If your timezone is incorrect, you can use `/timezone set` to set the correct one.*",
                 Color = Color.Gold,
-                Fields = new List<EmbedFieldBuilder>
-                {
-                    new()
+                Fields =
+                [
+                    new EmbedFieldBuilder
                     {
                         Name = "Localised Date/Time",
                         Value = localisedDateTimes,
                         IsInline = true
                     },
-                    new()
+
+                    new EmbedFieldBuilder
                     {
                         Name = "Frequency",
                         Value = frequencies,
                         IsInline = true
                     }
-                }
+                ]
             }.Build();
         }
     }

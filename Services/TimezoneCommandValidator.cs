@@ -6,7 +6,7 @@ namespace GameMasterBot.Services;
 
 public class TimezoneCommandValidator
 {
-    public CommandValidationError ValidateSetTimezoneCommand(string ianaTimezone)
+    public static CommandValidationError ValidateSetTimezoneCommand(string ianaTimezone)
     {
         try
         {

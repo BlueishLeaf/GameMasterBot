@@ -12,18 +12,14 @@ using GameMasterBot.Services.Interfaces;
 
 namespace GameMasterBot.Services;
 
-public class CampaignCommandValidator
+public partial class CampaignCommandValidator(ICampaignService campaignService)
 {
-    private readonly ICampaignService _campaignService;
-
-    public CampaignCommandValidator(ICampaignService campaignService) => _campaignService = campaignService;
-
     public async Task<CommandValidationError> ValidateCreateCampaignCommand(SocketInteractionContext context, CreateCampaignCommandDto createCampaignCommandDto)
     {
         if (createCampaignCommandDto.CampaignName.Length > CampaignValidationConstants.NameMaxLength)
             return CampaignValidationMessages.InvalidNameLength();
 
-        var channelRegex = new Regex(CampaignValidationConstants.NameRegexPattern);
+        var channelRegex = CampaignChannelNameRegex();
         if (!channelRegex.IsMatch(createCampaignCommandDto.CampaignName))
             return CampaignValidationMessages.InvalidNamePattern();
 
@@ -33,7 +29,7 @@ public class CampaignCommandValidator
         if (!channelRegex.IsMatch(createCampaignCommandDto.GameSystem))
             return CampaignValidationMessages.InvalidSystemPattern();
 
-        var guildCampaigns = await _campaignService.GetAllByGuildId(context.Guild.Id);
+        var guildCampaigns = await campaignService.GetAllByGuildId(context.Guild.Id);
         return guildCampaigns.Any(c => c.Name == createCampaignCommandDto.CampaignName)
             ? CampaignValidationMessages.CampaignAlreadyExists()
             : null;
@@ -41,7 +37,7 @@ public class CampaignCommandValidator
     
     public async Task<CommandValidationError> ValidateAddPlayerCommand(SocketInteractionContext context, IUser newPlayer)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -64,7 +60,7 @@ public class CampaignCommandValidator
     
     public async Task<CommandValidationError> ValidateRemovePlayerCommand(SocketInteractionContext context, IUser playerToRemove)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -84,7 +80,7 @@ public class CampaignCommandValidator
     
     public async Task<CommandValidationError> ValidateSetUrlCommand(SocketInteractionContext context, string url)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
             
@@ -97,7 +93,7 @@ public class CampaignCommandValidator
     
     public async Task<CommandValidationError> ValidateSetGameMaster(SocketInteractionContext context, IUser newGameMaster)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
             
@@ -118,7 +114,7 @@ public class CampaignCommandValidator
     
     public async Task<CommandValidationError> ValidateDeleteCampaignCommand(SocketInteractionContext context)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         if (campaign == null)
             return CommonValidationMessages.NotInCampaignChannel();
 
@@ -133,9 +129,12 @@ public class CampaignCommandValidator
     
     public async Task<CommandValidationError> ValidateCampaignInfoCommand(SocketInteractionContext context)
     {
-        var campaign = await _campaignService.GetByTextChannelId(context.Channel.Id);
+        var campaign = await campaignService.GetByTextChannelId(context.Channel.Id);
         return campaign == null ?
             CommonValidationMessages.NotInCampaignChannel() :
             null;
     }
+
+    [GeneratedRegex(CampaignValidationConstants.NameRegexPattern)]
+    private static partial Regex CampaignChannelNameRegex();
 }

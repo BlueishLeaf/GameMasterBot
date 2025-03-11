@@ -10,30 +10,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameMasterBot.Services;
 
-public class SessionSchedulingService : ISessionSchedulingService
+public class SessionSchedulingService(GameMasterBotContext context) : ISessionSchedulingService
 {
-    private readonly GameMasterBotContext _context;
-
-    public SessionSchedulingService(GameMasterBotContext context)
-    {
-        _context = context;
-    }
-
     public async Task<List<Session>> GetAllUpcomingSessions() => 
-        await _context.Sessions.Where(s => s.State != SessionState.Archived).ToListAsync();
+        await context.Sessions.Where(s => s.State != SessionState.Archived).ToListAsync();
 
     public async Task<List<Session>> GetSessionsOccurringInNextMinutes(int minutes)
     {
         var nowPlusMinutes = DateTime.UtcNow.AddMinutes(minutes);
-        return await _context.Sessions
+        return await context.Sessions
             .Where(s => s.Timestamp <= nowPlusMinutes && s.State != SessionState.Archived)
             .ToListAsync();
     }
 
     public async Task<Session> UpdateSession(Session session)
     {
-        var sessionUpdated =_context.Sessions.Update(session);
-        await _context.SaveChangesAsync();
+        var sessionUpdated =context.Sessions.Update(session);
+        await context.SaveChangesAsync();
         return sessionUpdated.Entity;
     }
     
@@ -49,7 +42,7 @@ public class SessionSchedulingService : ISessionSchedulingService
                 _ => session.Timestamp
             };
             Console.WriteLine($"{DateTime.Now:T} Creating new {session.Frequency} session for {timestamp:g}");
-            await _context.Sessions.AddAsync(new Session
+            await context.Sessions.AddAsync(new Session
             {
                 CampaignId = session.CampaignId,
                 Frequency = session.Frequency,
@@ -58,7 +51,7 @@ public class SessionSchedulingService : ISessionSchedulingService
                     ? SessionState.Confirmed
                     : SessionState.Scheduled
             });
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 }

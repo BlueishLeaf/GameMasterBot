@@ -1,14 +1,8 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: .NET
+name: Release Creation
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -38,3 +32,23 @@ jobs:
     steps:
     - name: Start the Application Service
       run: sudo systemctl start GameMasterBot.service
+
+    - name: Update Release with Files
+      id: update_release_files
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        name: ${{ github.event.release.name }}
+        draft: false
+        prerelease: false
+        artifacts: "./system.json, ./system.zip"
+        tag: ${{ github.event.release.tag_name }}
+        body: ${{ github.event.release.body }}
+
+    - name: Post Release to Discord Channel
+      id: post_release_to_discord
+      uses: SethCohen/github-releases-to-discord@v1.13.1
+      with:
+        webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        color: "3447003"
+        content: "A new release of GameMasterBot just dropped!"

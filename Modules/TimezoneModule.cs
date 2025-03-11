@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Discord.Interactions;
 using GameMasterBot.Constants;
@@ -11,21 +12,14 @@ namespace GameMasterBot.Modules
 {
     [RequireContext(ContextType.Guild)]
     [Group(TimezoneCommands.GroupName, TimezoneCommands.GroupDescription)]
-    public class TimezoneModule : InteractionModuleBase<SocketInteractionContext>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    [SuppressMessage("ReSharper", "UnusedType.Global")]
+    public class TimezoneModule(IUserService userService) : InteractionModuleBase<SocketInteractionContext>
     {
-        private readonly TimezoneCommandValidator _validator;
-        private readonly IUserService _userService;
-        
-        public TimezoneModule(TimezoneCommandValidator validator, IUserService userService)
-        {
-            _validator = validator;
-            _userService = userService;
-        }
-
         [SlashCommand(TimezoneCommands.ViewCommandName, TimezoneCommands.ViewCommandDescription)]
         public async Task<RuntimeResult> TimezoneAsync()
         {
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var user = await userService.GetByDiscordUserId(Context.User.Id);
 
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
 
@@ -44,11 +38,11 @@ namespace GameMasterBot.Modules
         public async Task<RuntimeResult> SetTimezoneAsync(
             [Summary(TimezoneCommands.SetCommandParamIanaTimezoneName, TimezoneCommands.SetCommandParamIanaTimezoneDescription)] string ianaTimezone)
         {
-            var commandValidationError = _validator.ValidateSetTimezoneCommand(ianaTimezone);
+            var commandValidationError = TimezoneCommandValidator.ValidateSetTimezoneCommand(ianaTimezone);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
 
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(ianaTimezone);
-            await _userService.UpdateTimezone(Context.User.Id, tzInfo.Id);
+            await userService.UpdateTimezone(Context.User.Id, tzInfo.Id);
 
             await RespondAsync(TimezoneResponseMessages.SetNewTimezone(tzInfo.Id), ephemeral: true);
             return CommandResult.AsSuccess();

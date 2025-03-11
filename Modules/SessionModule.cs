@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,21 +17,10 @@ namespace GameMasterBot.Modules
 {
     [RequireContext(ContextType.Guild)]
     [Group(SessionCommands.GroupName, SessionCommands.GroupDescription)]
-    public class SessionModule : InteractionModuleBase<SocketInteractionContext>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    [SuppressMessage("ReSharper", "UnusedType.Global")]
+    public class SessionModule(SessionCommandValidator validator, ISessionService sessionService, ICampaignService campaignService, IUserService userService) : InteractionModuleBase<SocketInteractionContext>
     {
-        private readonly SessionCommandValidator _validator;
-        private readonly ISessionService _sessionService;
-        private readonly ICampaignService _campaignService;
-        private readonly IUserService _userService;
-
-        public SessionModule(SessionCommandValidator validator, ISessionService sessionService, ICampaignService campaignService, IUserService userService)
-        {
-            _validator = validator;
-            _sessionService = sessionService;
-            _campaignService = campaignService;
-            _userService = userService;
-        }
-
         [SlashCommand(SessionCommands.ScheduleCommandName, SessionCommands.ScheduleCommandDescription)]
         public async Task<RuntimeResult> ScheduleSessionAsync(
             [Summary(SessionCommands.ScheduleCommandParamDateName,SessionCommands.ScheduleCommandParamDateDescription)] string date,
@@ -43,7 +33,7 @@ namespace GameMasterBot.Modules
             ScheduleFrequency frequency)
         {
             var scheduleSessionCommandDto = new ScheduleSessionCommandDto(date, time);
-            var commandValidationError = await _validator.ValidateScheduleSessionCommand(Context, scheduleSessionCommandDto);
+            var commandValidationError = await validator.ValidateScheduleSessionCommand(Context, scheduleSessionCommandDto);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var parsedDate = DateTime.ParseExact(
@@ -52,12 +42,12 @@ namespace GameMasterBot.Modules
                 CultureInfo.InvariantCulture, 
                 DateTimeStyles.None);
             
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var user = await userService.GetByDiscordUserId(Context.User.Id);
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var session = await _sessionService.Create(campaign.Id, frequency, utcTime);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
+            var session = await sessionService.Create(campaign.Id, frequency, utcTime);
             await RespondAsync(
                 SessionResponseMessages.SessionSuccessfullyScheduled(), 
                 embed: SessionEmbedBuilder.BuildSessionEmbed(session));
@@ -70,7 +60,7 @@ namespace GameMasterBot.Modules
             [Summary(SessionCommands.SuggestCommandParamTimeName,SessionCommands.SuggestCommandParamTimeDescription)] string time)
         {
             var scheduleSessionCommandDto = new ScheduleSessionCommandDto(date, time);
-            var commandValidationError = await _validator.ValidateSuggestSessionCommand(Context, scheduleSessionCommandDto);
+            var commandValidationError = await validator.ValidateSuggestSessionCommand(Context, scheduleSessionCommandDto);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var parsedDate = DateTime.ParseExact(
@@ -79,11 +69,11 @@ namespace GameMasterBot.Modules
                 CultureInfo.InvariantCulture, 
                 DateTimeStyles.None);
             
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var user = await userService.GetByDiscordUserId(Context.User.Id);
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
             var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
 
             await RespondAsync(
                 SessionResponseMessages.SessionSuccessfullySuggested(), 
@@ -94,11 +84,11 @@ namespace GameMasterBot.Modules
         [SlashCommand(SessionCommands.ViewNextCommandName, SessionCommands.ViewNextCommandDescription)]
         public async Task<RuntimeResult> ViewNextSessionAsync()
         {
-            var commandValidationError = await _validator.ValidateViewNextSessionCommand(Context);
+            var commandValidationError = await validator.ValidateViewNextSessionCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
+            var sessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
 
             await RespondAsync(
                 SessionResponseMessages.NextSessionScheduled(),
@@ -110,12 +100,12 @@ namespace GameMasterBot.Modules
         [SlashCommand(SessionCommands.ViewUpcomingCommandName, SessionCommands.ViewUpcomingCommandDescription)]
         public async Task<RuntimeResult> ViewUpcomingSessionsAsync()
         {
-            var commandValidationError = await _validator.ValidateViewUpcomingSessionsCommand(Context);
+            var commandValidationError = await validator.ValidateViewUpcomingSessionsCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            var sessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
+            var sessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            var user = await userService.GetByDiscordUserId(Context.User.Id);
 
             await RespondAsync(
                 embed: SessionEmbedBuilder.BuildSessionListEmbed(user, sessions),
@@ -126,13 +116,13 @@ namespace GameMasterBot.Modules
         [SlashCommand(SessionCommands.CancelNextCommandName, SessionCommands.CancelNextCommandDescription)]
         public async Task<RuntimeResult> CancelNextSessionAsync()
         {
-            var commandValidationError = await _validator.ValidateCancelNextSessionCommand(Context);
+            var commandValidationError = await validator.ValidateCancelNextSessionCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            await _sessionService.CancelNextByCampaignId(campaign.Id);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
+            await sessionService.CancelNextByCampaignId(campaign.Id);
 
-            var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            var upcomingSessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
 
             if (upcomingSessions.Count == 0)
                 await RespondAsync(
@@ -151,7 +141,7 @@ namespace GameMasterBot.Modules
         {
             var cancelSessionDto = new CancelSessionDto(date, time);
             
-            var commandValidationError = await _validator.ValidateCancelSessionCommand(Context, cancelSessionDto);
+            var commandValidationError = await validator.ValidateCancelSessionCommand(Context, cancelSessionDto);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var parsedDate = DateTime.ParseExact(
@@ -159,14 +149,14 @@ namespace GameMasterBot.Modules
                 SessionValidationConstants.SessionDateTimeFormat,
                 CultureInfo.InvariantCulture, 
                 DateTimeStyles.None);
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var user = await userService.GetByDiscordUserId(Context.User.Id);
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            await _sessionService.CancelAllByCampaignIdAndTimestamp(campaign.Id, utcTime);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
+            await sessionService.CancelAllByCampaignIdAndTimestamp(campaign.Id, utcTime);
             
-            var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            var upcomingSessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
             if (upcomingSessions.Count == 0)
                 await RespondAsync(
                     $"{SessionResponseMessages.SessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions()}");
@@ -185,7 +175,7 @@ namespace GameMasterBot.Modules
         {
             var cancelSessionDto = new CancelSessionDto(date, time);
             
-            var commandValidationError = await _validator.ValidateCancelRecurringSessionCommand(Context, cancelSessionDto);
+            var commandValidationError = await validator.ValidateCancelRecurringSessionCommand(Context, cancelSessionDto);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
             var parsedDate = DateTime.ParseExact(
@@ -193,15 +183,15 @@ namespace GameMasterBot.Modules
                 SessionValidationConstants.SessionDateTimeFormat,
                 CultureInfo.InvariantCulture, 
                 DateTimeStyles.None);
-            var user = await _userService.GetByDiscordUserId(Context.User.Id);
+            var user = await userService.GetByDiscordUserId(Context.User.Id);
             var tzInfo = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(parsedDate, tzInfo);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
             
-            await _sessionService.CancelAllRecurringByCampaignIdAndTimestamp(campaign.Id, utcTime);
+            await sessionService.CancelAllRecurringByCampaignIdAndTimestamp(campaign.Id, utcTime);
 
-            var upcomingSessions = await _sessionService.GetAllUpcomingByCampaignId(campaign.Id);
+            var upcomingSessions = await sessionService.GetAllUpcomingByCampaignId(campaign.Id);
             if (upcomingSessions.Count == 0)
                 await RespondAsync(
                     $"{SessionResponseMessages.RecurringSessionCancelled()} {SessionResponseMessages.NoMoreUpcomingSessions()}");
@@ -215,11 +205,11 @@ namespace GameMasterBot.Modules
         [SlashCommand(SessionCommands.CancelAllCommandName, SessionCommands.CancelAllCommandDescription)]
         public async Task<RuntimeResult> CancelAllSessionsAsync()
         {
-            var commandValidationError = await _validator.ValidateCancelAllSessionsCommand(Context);
+            var commandValidationError = await validator.ValidateCancelAllSessionsCommand(Context);
             if (commandValidationError != null) return CommandResult.FromError(commandValidationError.ErrorMessage);
             
-            var campaign = await _campaignService.GetByTextChannelId(Context.Channel.Id);
-            await _sessionService.CancelAllByCampaignId(campaign.Id);
+            var campaign = await campaignService.GetByTextChannelId(Context.Channel.Id);
+            await sessionService.CancelAllByCampaignId(campaign.Id);
 
             await RespondAsync(SessionResponseMessages.AllSessionsCancelled());
             return CommandResult.AsSuccess();
