@@ -11,7 +11,7 @@ jobs:
       DOTNET_INSTALL_DIR: "~/.dotnet"
       DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.2.2
     - name: Setup .NET
       uses: actions/setup-dotnet@v4.3.1
       with:
