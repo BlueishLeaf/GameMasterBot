@@ -13,9 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3.0.3
+      uses: actions/setup-dotnet@v4.3.1
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 9.0.x
     - name: Restore Tools
       run: dotnet tool restore
     - name: Restore Dependencies
@@ -32,18 +32,6 @@ jobs:
     steps:
     - name: Start the Application Service
       run: sudo systemctl start GameMasterBot.service
-
-    - name: Update Release with Files
-      id: update_release_files
-      uses: ncipollo/release-action@v1
-      with:
-        allowUpdates: true
-        name: ${{ github.event.release.name }}
-        draft: false
-        prerelease: false
-        artifacts: "./system.json, ./system.zip"
-        tag: ${{ github.event.release.tag_name }}
-        body: ${{ github.event.release.body }}
 
     - name: Post Release to Discord Channel
       id: post_release_to_discord
